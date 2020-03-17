@@ -5,14 +5,41 @@ from pygame.locals import *
 WHITE = (255, 255, 255)
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self,player_cen_x,player_cen_y):
         pygame.sprite.Sprite.__init__(self)
 
-        self.image=pygame.image.load("bullet")
-        self.rect=self.image.get_rect()
+        self.image=pygame.image.load("bullet.png")
+        self.rect=self.image.get_rect(topleft=(player_cen_x,player_cen_y))
         self.speed=10
+        self.ready=True
+        self.fired=False
+        self.timer=pygame.time.get_ticks()
+        self.fire_rate=700
 
-    def update(self):
+    def update(self,pressed_key,current_time,player_center_x,player_center_y):
+        if self.fired:
+            self.rect.y-=self.speed
+            self.ready=False
+            if self.rect.y<=0:
+                self.rect.x=player_center_x
+                self.rect.y=player_center_y
+                self.fired=False
+                self.ready=True
+
+        if self.ready:
+            if pressed_key[K_UP]:
+                if current_time - self.timer >= self.fire_rate:
+                    self.ready=False
+                    self.fired=True
+                    self.timer+=self.fire_rate
+                else:
+                    self.ready=True
+                    self.fired=False
+            else:
+                self.rect.x=player_center_x
+                self.rect.y=player_center_y
+        else:
+            pass
 
 
 class Player(pygame.sprite.Sprite):
@@ -106,6 +133,7 @@ class Game(object):
         self.player=Player()
         self.enemy=Enemy()
         self.sup_enemy=Super_Enemy()
+        self.player_bullet=Bullet(self.player.rect.x+20,self.player.rect.y+5)
 
         self.game_over=False
 
@@ -114,14 +142,17 @@ class Game(object):
         self.all_group = pygame.sprite.Group()
         self.player_group=pygame.sprite.Group()
         self.enemy_group=pygame.sprite.Group()
+        self.bullet_group=pygame.sprite.Group()
 
         self.all_group.add(self.player)
         self.all_group.add(self.sup_enemy)
         self.all_group.add(self.enemy)
+        self.all_group.add(self.player_bullet)
 
         self.enemy_group.add(self.sup_enemy)
         self.enemy_group.add(self.enemy)
         self.player_group.add(self.player)
+        self.bullet_group.add(self.player_bullet)
 
     def process_events(self):
         for event in pygame.event.get():
@@ -137,6 +168,8 @@ class Game(object):
 
             self.pressed_keys=pygame.key.get_pressed()
             self.player_group.update(self.pressed_keys)
+
+            self.bullet_group.update(self.pressed_keys,currentTime,self.player.rect.x+20,self.player.rect.y+5)
 
             self.enemy_group.update(currentTime)
 
