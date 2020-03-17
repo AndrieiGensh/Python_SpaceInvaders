@@ -4,6 +4,17 @@ from pygame.locals import *
 
 WHITE = (255, 255, 255)
 
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+
+        self.image=pygame.image.load("bullet")
+        self.rect=self.image.get_rect()
+        self.speed=10
+
+    def update(self):
+
+
 class Player(pygame.sprite.Sprite):
 
     def __init__(self):
