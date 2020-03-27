@@ -4,6 +4,18 @@ from pygame.locals import *
 
 WHITE = (255, 255, 255)
 
+class Life(pygame.sprite.Sprite):
+    def __init__(self,position_x,position_y):
+        pygame.sprite.Sprite.__init__(self)
+
+        self.image=pygame.image.load("ship.png")
+        self.image=pygame.transform.scale(self.image,(23,23))
+        self.rect=self.image.get_rect(topleft=(position_x,position_y))
+        self.state=True
+
+    def update(self, screen):
+        screen.blit(self.image,self.rect)
+
 class Bullet(pygame.sprite.Sprite):
     def __init__(self,player_cen_x,player_cen_y):
         pygame.sprite.Sprite.__init__(self)
@@ -135,6 +147,10 @@ class Game(object):
         self.sup_enemy=Super_Enemy()
         self.player_bullet=Bullet(self.player.rect.x+20,self.player.rect.y+5)
 
+        self.life1=Life(700,50)
+        self.life2=Life(733,50)
+        self.life3=Life(766,50)
+
         self.game_over=False
 
         self.clock=pygame.time.Clock()
@@ -143,11 +159,15 @@ class Game(object):
         self.player_group=pygame.sprite.Group()
         self.enemy_group=pygame.sprite.Group()
         self.bullet_group=pygame.sprite.Group()
+        self.life_group=pygame.sprite.Group(self.life1,self.life2,self.life3)
 
         self.all_group.add(self.player)
         self.all_group.add(self.sup_enemy)
         self.all_group.add(self.enemy)
         self.all_group.add(self.player_bullet)
+        self.all_group.add(self.life1)
+        self.all_group.add(self.life2)
+        self.all_group.add(self.life3)
 
         self.enemy_group.add(self.sup_enemy)
         self.enemy_group.add(self.enemy)
@@ -161,7 +181,7 @@ class Game(object):
             else:
                 return False
 
-    def run_game(self):
+    def run_game(self,screen):
 
         if not self.game_over:
             currentTime=pygame.time.get_ticks()
@@ -172,6 +192,8 @@ class Game(object):
             self.bullet_group.update(self.pressed_keys,currentTime,self.player.rect.x+20,self.player.rect.y+5)
 
             self.enemy_group.update(currentTime)
+
+            self.life_group.update(screen)
 
     def display(self,display_screen):
 
@@ -196,7 +218,7 @@ def main():
         DISPLAY_SCREEN.blit(bg,(0,0))
         over=game_instance.process_events()
 
-        game_instance.run_game()
+        game_instance.run_game(DISPLAY_SCREEN)
 
         game_instance.display(DISPLAY_SCREEN)
 
