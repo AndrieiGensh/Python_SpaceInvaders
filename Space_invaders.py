@@ -17,41 +17,32 @@ class Life(pygame.sprite.Sprite):
         screen.blit(self.image,self.rect)
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self,player_cen_x,player_cen_y):
+    def __init__(self,center_x,center_y,who_shoots):
         pygame.sprite.Sprite.__init__(self)
 
         self.image=pygame.image.load("bullet.png")
-        self.rect=self.image.get_rect(topleft=(player_cen_x,player_cen_y))
-        self.speed=10
-        self.ready=True
-        self.fired=False
-        self.timer=pygame.time.get_ticks()
-        self.fire_rate=700
-
-    def update(self,pressed_key,current_time,player_center_x,player_center_y):
-        if self.fired:
-            self.rect.y-=self.speed
-            self.ready=False
-            if self.rect.y<=0:
-                self.rect.x=player_center_x
-                self.rect.y=player_center_y
-                self.fired=False
-                self.ready=True
-
-        if self.ready:
-            if pressed_key[K_UP]:
-                if current_time - self.timer >= self.fire_rate:
-                    self.ready=False
-                    self.fired=True
-                    self.timer+=self.fire_rate
-                else:
-                    self.ready=True
-                    self.fired=False
-            else:
-                self.rect.x=player_center_x
-                self.rect.y=player_center_y
+        self.rect=self.image.get_rect(topleft=(center_x,center_y))
+        self.master=who_shoots
+        self.direction=0
+        if self.master=="player":
+            self.direction=-1
+            print("it is players bullet")
         else:
-            pass
+            self.direction=1
+        self.speed=10
+
+    def update(self,screen):
+        screen.blit(self.image,self.rect)
+        self.rect.y+=self.direction*self.speed
+        if self.direction==-1:
+            if self.rect.y<=20:
+                print("killed bullet")
+                self.kill()
+        else:
+            if self.rect.y>=580:
+                print("killed bullet")
+                self.kill()
+
 
 
 class Player(pygame.sprite.Sprite):
@@ -62,14 +53,18 @@ class Player(pygame.sprite.Sprite):
         self.image=pygame.image.load("ship.png")
         self.rect= self.image.get_rect(topleft=(370,550))
         self.movement_speed=5
+        self.fire_rate=700
+        self.timer=pygame.time.get_ticks()
 
-    def update(self, pressed_keys,*args):
+    def update(self, pressed_keys,screen):
         if pressed_keys[pygame.K_LEFT]:
             if self.rect.x>=20:
                 self.rect.x-=self.movement_speed
+                screen.blit(self.image,self.rect)
         elif pressed_keys[pygame.K_RIGHT]:
             if self.rect.x<=740:
                 self.rect.x+=self.movement_speed
+                screen.blit(self.image, self.rect)
 
 class Enemy(pygame.sprite.Sprite):
 
@@ -145,7 +140,6 @@ class Game(object):
         self.player=Player()
         self.enemy=Enemy()
         self.sup_enemy=Super_Enemy()
-        self.player_bullet=Bullet(self.player.rect.x+20,self.player.rect.y+5)
 
         self.life1=Life(700,50)
         self.life2=Life(733,50)
@@ -164,7 +158,6 @@ class Game(object):
         self.all_group.add(self.player)
         self.all_group.add(self.sup_enemy)
         self.all_group.add(self.enemy)
-        self.all_group.add(self.player_bullet)
         self.all_group.add(self.life1)
         self.all_group.add(self.life2)
         self.all_group.add(self.life3)
@@ -172,7 +165,6 @@ class Game(object):
         self.enemy_group.add(self.sup_enemy)
         self.enemy_group.add(self.enemy)
         self.player_group.add(self.player)
-        self.bullet_group.add(self.player_bullet)
 
     def process_events(self):
         for event in pygame.event.get():
@@ -187,12 +179,21 @@ class Game(object):
             currentTime=pygame.time.get_ticks()
 
             self.pressed_keys=pygame.key.get_pressed()
-            self.player_group.update(self.pressed_keys)
 
-            self.bullet_group.update(self.pressed_keys,currentTime,self.player.rect.x+20,self.player.rect.y+5)
+            if self.pressed_keys[pygame.K_UP]:
+                if (currentTime-self.player.timer)>=self.player.fire_rate and len(self.bullet_group)==0:
+                    print("supposed to fire")
+                    p_bullet=Bullet(self.player.rect.x+20,self.player.rect.y+5,"player")
+                    self.bullet_group.add(p_bullet)
+                    print("player timer before:",self.player.timer)
+                    self.player.timer+=self.player.fire_rate
+                    print("player timer after:",self.player.timer)
+                else:
+                    print("not the time")
 
+            self.player_group.update(self.pressed_keys,screen)
+            self.bullet_group.update(screen)
             self.enemy_group.update(currentTime)
-
             self.life_group.update(screen)
 
     def display(self,display_screen):
