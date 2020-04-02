@@ -67,22 +67,25 @@ class Player(pygame.sprite.Sprite):
                 screen.blit(self.image, self.rect)
 
 class Enemy(pygame.sprite.Sprite):
+    timer=pygame.time.get_ticks()
 
-    def __init__(self):
+    def __init__(self,row,column):
         pygame.sprite.Sprite.__init__(self)
 
         self.image=pygame.image.load("enemy.png")
         self.image=pygame.transform.scale(self.image,(40,35))
         self.rect=self.image.get_rect()
-        self.rect.x=370
-        self.rect.y=30
+        self.rect.x=35+60*column
+        self.rect.y=30+75*row
+        self.row=row
+        self.column=column
         self.down_speed=30
         self.left_right_speed=30
 
         self.points_scored=0
 
         self.move_time=600
-        self.timer=pygame.time.get_ticks()
+        #self.timer=pygame.time.get_ticks()
 
         self.move_direc=1
 
@@ -90,17 +93,52 @@ class Enemy(pygame.sprite.Sprite):
         if (current_time-self.timer) >= self.move_time:
             if self.move_direc==1:
                 self.rect.x+=self.left_right_speed
-                if self.rect.x>=740:
-                    self.move_direc=-1
-                    self.rect.y+=self.down_speed
-                self.timer += self.move_time
+                self.timer += (current_time-self.timer)
 
             else:
                 self.rect.x-=self.left_right_speed
-                if self.rect.x<=20:
-                    self.move_direc=1
-                    self.rect.y+=self.down_speed
-                self.timer += self.move_time
+                self.timer += (current_time-self.timer)
+
+
+class EnemyGroup(pygame.sprite.Group):
+    def __init__(self):
+        pygame.sprite.Group.__init__(self)
+        self.rows=3
+        self.columns=10
+        self.enemies_list=[[None for j in range(self.columns)]for i in range(self.rows)]
+        self.right_column_index=9
+        self.left_column_index=0
+        self.direction=1
+
+    def add_internal(self, *sprite):
+        super(EnemyGroup,self).add_internal(*sprite)
+        for spr in sprite:
+            self.enemies_list[spr.row][spr.column]=spr
+
+    def update(self,screen):
+        current_time=pygame.time.get_ticks()
+        for i in range(self.rows):
+            for j in range(self.columns):
+                self.enemies_list[i][j].update(current_time)
+        if self.direction==1:
+            if self.enemies_list[0][self.right_column_index].rect.x>=725:
+                self.direction=-1
+                for i in range(self.rows):
+                    for j in range(self.columns):
+                        self.enemies_list[i][j].rect.y+=self.enemies_list[i][j].down_speed
+                        self.enemies_list[i][j].move_direc=self.direction
+        else:
+            if self.enemies_list[0][self.left_column_index].rect.x<=35:
+                self.direction=1
+                for i in range(self.rows):
+                    for j in range(self.columns):
+                        self.enemies_list[i][j].rect.y+=self.enemies_list[i][j].down_speed
+                        self.enemies_list[i][j].move_direc = self.direction
+        for i in range(self.rows):
+            for j in range(self.columns):
+                screen.blit(self.enemies_list[i][j].image,self.enemies_list[i][j].rect)
+
+
 
 class Super_Enemy(pygame.sprite.Sprite):
     def __init__(self):
@@ -138,8 +176,9 @@ class Game(object):
 
     def __init__(self):
         self.player=Player()
-        self.enemy=Enemy()
+        #self.enemy=Enemy()
         self.sup_enemy=Super_Enemy()
+        self.enemies=EnemyGroup()
 
         self.life1=Life(700,50)
         self.life2=Life(733,50)
@@ -148,6 +187,13 @@ class Game(object):
         self.game_over=False
 
         self.clock=pygame.time.Clock()
+        self.fps=60
+
+        for i in range(self.enemies.rows):
+            for j in range(self.enemies.columns):
+                new_enemy = Enemy(i,j)
+                self.enemies.add(new_enemy)
+
 
         self.all_group = pygame.sprite.Group()
         self.player_group=pygame.sprite.Group()
@@ -157,13 +203,13 @@ class Game(object):
 
         self.all_group.add(self.player)
         self.all_group.add(self.sup_enemy)
-        self.all_group.add(self.enemy)
+        self.all_group.add(self.enemies)
         self.all_group.add(self.life1)
         self.all_group.add(self.life2)
         self.all_group.add(self.life3)
 
         self.enemy_group.add(self.sup_enemy)
-        self.enemy_group.add(self.enemy)
+        #self.enemy_group.add(self.enemies)
         self.player_group.add(self.player)
 
     def process_events(self):
@@ -194,6 +240,7 @@ class Game(object):
             self.player_group.update(self.pressed_keys,screen)
             self.bullet_group.update(screen)
             self.enemy_group.update(currentTime)
+            self.enemies.update(screen)
             self.life_group.update(screen)
 
     def display(self,display_screen):
@@ -223,7 +270,7 @@ def main():
 
         game_instance.display(DISPLAY_SCREEN)
 
-        game_instance.clock.tick(60)
+        game_instance.clock.tick(game_instance.fps)
 
     pygame.quit()
 
