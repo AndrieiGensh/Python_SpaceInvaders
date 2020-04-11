@@ -17,7 +17,7 @@ class Life(pygame.sprite.Sprite):
         screen.blit(self.image,self.rect)
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self,center_x,center_y,who_shoots):
+    def __init__(self,center_x,center_y,who_shoots,speed):
         pygame.sprite.Sprite.__init__(self)
 
         self.image=pygame.image.load("bullet.png")
@@ -29,7 +29,7 @@ class Bullet(pygame.sprite.Sprite):
             print("it is players bullet")
         else:
             self.direction=1
-        self.speed=10
+        self.speed=speed
 
     def update(self,screen):
         screen.blit(self.image,self.rect)
@@ -105,10 +105,16 @@ class EnemyGroup(pygame.sprite.Group):
         pygame.sprite.Group.__init__(self)
         self.rows=3
         self.columns=10
+        self.alive_enemies_count=self.rows*self.columns
+        self.alive_indexes=[x for x in range(0,30,1)]
         self.enemies_list=[[None for j in range(self.columns)]for i in range(self.rows)]
         self.right_column_index=9
         self.left_column_index=0
         self.direction=1
+        self.fire_rate=3000
+        self.bullet_speeds=[7,10,12,15]
+        self.timer=pygame.time.get_ticks()
+        self.delay_timer=pygame.time.get_ticks()
 
     def add_internal(self, *sprite):
         super(EnemyGroup,self).add_internal(*sprite)
@@ -186,6 +192,8 @@ class Game(object):
 
         self.game_over=False
 
+        self.secret_iterator=0
+
         self.clock=pygame.time.Clock()
         self.fps=60
 
@@ -199,6 +207,7 @@ class Game(object):
         self.player_group=pygame.sprite.Group()
         self.enemy_group=pygame.sprite.Group()
         self.bullet_group=pygame.sprite.Group()
+        self.enemy_bullets_group=pygame.sprite.Group()
         self.life_group=pygame.sprite.Group(self.life1,self.life2,self.life3)
 
         self.all_group.add(self.player)
@@ -229,7 +238,7 @@ class Game(object):
             if self.pressed_keys[pygame.K_UP]:
                 if (currentTime-self.player.timer)>=self.player.fire_rate and len(self.bullet_group)==0:
                     print("supposed to fire")
-                    p_bullet=Bullet(self.player.rect.x+20,self.player.rect.y+5,"player")
+                    p_bullet=Bullet(self.player.rect.x+20,self.player.rect.y+5,"player",10)
                     self.bullet_group.add(p_bullet)
                     print("player timer before:",self.player.timer)
                     self.player.timer+=self.player.fire_rate
@@ -237,8 +246,22 @@ class Game(object):
                 else:
                     print("not the time")
 
+            current_Time=pygame.time.get_ticks()
+            if (current_Time - self.enemies.timer )>= self.enemies.fire_rate and len(self.enemy_bullets_group)==0:
+                how_many_should_fire = random.randint(4, 8)
+                list_of_firing_enemies = random.sample(self.enemies.alive_indexes, how_many_should_fire)
+                for enemy_index in list_of_firing_enemies:
+                    r=enemy_index//10
+                    c=enemy_index%10
+                    random_speed=random.choice(self.enemies.bullet_speeds)
+                    enemy_bullet=Bullet(self.enemies.enemies_list[r][c].rect.x+20,self.enemies.enemies_list[r][c].rect.y+5,"enemy",random_speed)
+                    self.enemy_bullets_group.add(enemy_bullet)
+                self.enemies.timer+=self.enemies.fire_rate
+
+
             self.player_group.update(self.pressed_keys,screen)
             self.bullet_group.update(screen)
+            self.enemy_bullets_group.update(screen)
             self.enemy_group.update(currentTime)
             self.enemies.update(screen)
             self.life_group.update(screen)
