@@ -3,6 +3,22 @@ import random
 from pygame.locals import *
 
 WHITE = (255, 255, 255)
+GREEN = (78, 255, 87)
+YELLOW = (241, 255, 0)
+BLUE = (80, 255, 239)
+PURPLE = (203, 0, 255)
+RED = (237, 28, 36)
+FONT = "font.ttf"
+
+
+class Text(object):
+    def __init__(self,text,t_font,size,colour,x,y):
+        self.font = pygame.font.Font(t_font, size)
+        self.surface = self.font.render(text, True, colour)
+        self.rect = self.surface.get_rect(topleft=(x, y))
+
+    def show(self,screen):
+        screen.blit(self.surface,self.rect)
 
 class Life(pygame.sprite.Sprite):
     def __init__(self,position_x,position_y):
@@ -26,7 +42,6 @@ class Bullet(pygame.sprite.Sprite):
         self.direction=0
         if self.master=="player":
             self.direction=-1
-            print("it is players bullet")
         else:
             self.direction=1
         self.speed=speed
@@ -36,11 +51,9 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.y+=self.direction*self.speed
         if self.direction==-1:
             if self.rect.y<=20:
-                print("killed bullet")
                 self.kill()
         else:
             if self.rect.y>=580:
-                print("killed bullet")
                 self.kill()
 
 
@@ -79,25 +92,10 @@ class Enemy(pygame.sprite.Sprite):
         self.rect.y=30+75*row
         self.row=row
         self.column=column
-        self.down_speed=30
-        self.left_right_speed=30
+        self.points_scored=50
 
-        self.points_scored=0
-
-        self.move_time=600
-        #self.timer=pygame.time.get_ticks()
-
-        self.move_direc=1
-
-    def update(self,current_time):
-        if (current_time-self.timer) >= self.move_time:
-            if self.move_direc==1:
-                self.rect.x+=self.left_right_speed
-                self.timer += (current_time-self.timer)
-
-            else:
-                self.rect.x-=self.left_right_speed
-                self.timer += (current_time-self.timer)
+    def update(self,screen):
+        screen.blit(self.image,self.rect)
 
 
 class EnemyGroup(pygame.sprite.Group):
@@ -113,6 +111,12 @@ class EnemyGroup(pygame.sprite.Group):
         self.direction=1
         self.fire_rate=3000
         self.bullet_speeds=[7,10,12,15]
+
+        self.down_speed=30
+        self.left_right_speed=30
+        self.move_time=600
+
+        self.move_timer=pygame.time.get_ticks()
         self.timer=pygame.time.get_ticks()
         self.delay_timer=pygame.time.get_ticks()
 
@@ -121,28 +125,30 @@ class EnemyGroup(pygame.sprite.Group):
         for spr in sprite:
             self.enemies_list[spr.row][spr.column]=spr
 
+    def remove_internal(self, *sprite):
+        super(EnemyGroup, self).remove_internal(*sprite)
+        for spr in sprite:
+            self.enemies_list[spr.row][spr.column]=None
+            self.alive_indexes.remove(spr.row*10+spr.column)
+
     def update(self,screen):
         current_time=pygame.time.get_ticks()
-        for i in range(self.rows):
-            for j in range(self.columns):
-                self.enemies_list[i][j].update(current_time)
-        if self.direction==1:
-            if self.enemies_list[0][self.right_column_index].rect.x>=725:
-                self.direction=-1
-                for i in range(self.rows):
-                    for j in range(self.columns):
-                        self.enemies_list[i][j].rect.y+=self.enemies_list[i][j].down_speed
-                        self.enemies_list[i][j].move_direc=self.direction
-        else:
-            if self.enemies_list[0][self.left_column_index].rect.x<=35:
-                self.direction=1
-                for i in range(self.rows):
-                    for j in range(self.columns):
-                        self.enemies_list[i][j].rect.y+=self.enemies_list[i][j].down_speed
-                        self.enemies_list[i][j].move_direc = self.direction
-        for i in range(self.rows):
-            for j in range(self.columns):
-                screen.blit(self.enemies_list[i][j].image,self.enemies_list[i][j].rect)
+        if current_time-self.move_timer>=self.move_time:
+            for enemy in self:
+                enemy.rect.x += self.direction * self.left_right_speed
+            if self.direction==1:
+                if self.enemies_list[0][self.right_column_index].rect.x>=725:
+                    self.direction=-1
+                    for enemy in self:
+                        enemy.rect.y+=self.down_speed
+            else:
+                if self.enemies_list[0][self.left_column_index].rect.x<=35:
+                    self.direction=1
+                    for enemy in self:
+                        enemy.rect.y += self.down_speed
+            for enemy in self:
+                enemy.update(screen)
+            self.move_timer=pygame.time.get_ticks()
 
 
 
@@ -181,6 +187,9 @@ class Super_Enemy(pygame.sprite.Sprite):
 class Game(object):
 
     def __init__(self):
+
+        self.score=0;
+
         self.player=Player()
         #self.enemy=Enemy()
         self.sup_enemy=Super_Enemy()
@@ -205,7 +214,7 @@ class Game(object):
 
         self.all_group = pygame.sprite.Group()
         self.player_group=pygame.sprite.Group()
-        self.enemy_group=pygame.sprite.Group()
+        self.sup_enemy_group=pygame.sprite.Group()
         self.bullet_group=pygame.sprite.Group()
         self.enemy_bullets_group=pygame.sprite.Group()
         self.life_group=pygame.sprite.Group(self.life1,self.life2,self.life3)
@@ -217,8 +226,7 @@ class Game(object):
         self.all_group.add(self.life2)
         self.all_group.add(self.life3)
 
-        self.enemy_group.add(self.sup_enemy)
-        #self.enemy_group.add(self.enemies)
+        self.sup_enemy_group.add(self.sup_enemy)
         self.player_group.add(self.player)
 
     def process_events(self):
@@ -227,6 +235,28 @@ class Game(object):
                return True
             else:
                 return False
+
+    def collisions(self,screen):
+        for en in pygame.sprite.groupcollide(self.enemies,self.bullet_group,True,True).keys():
+            mes = Text(str(en.points_scored),FONT,20,PURPLE,en.rect.x,en.rect.y)
+            mes.show(screen)
+            self.score+=en.points_scored
+
+        for pl in pygame.sprite.groupcollide(self.player_group,self.enemy_bullets_group,False,True).keys():
+            if self.life1.alive():
+                self.life1.kill()
+            elif self.life2.alive():
+                self.life2.kill()
+            elif self.life3.alive():
+                self.life3.kill()
+                mes = Text("Game Over!!!",FONT,50,RED,400,400)
+                mes.show(screen)
+                pl.kill()
+                self.game_over=True
+
+        for sup in pygame.sprite.groupcollide(self.sup_enemy_group,self.bullet_group,True,True).keys():
+            mes = Text(str(sup.points_scored), FONT, 50, BLUE, 400, 400)
+            mes.show(screen)
 
     def run_game(self,screen):
 
@@ -237,14 +267,11 @@ class Game(object):
 
             if self.pressed_keys[pygame.K_UP]:
                 if (currentTime-self.player.timer)>=self.player.fire_rate and len(self.bullet_group)==0:
-                    print("supposed to fire")
                     p_bullet=Bullet(self.player.rect.x+20,self.player.rect.y+5,"player",10)
                     self.bullet_group.add(p_bullet)
-                    print("player timer before:",self.player.timer)
                     self.player.timer+=self.player.fire_rate
-                    print("player timer after:",self.player.timer)
                 else:
-                    print("not the time")
+                    pass
 
             current_Time=pygame.time.get_ticks()
             if (current_Time - self.enemies.timer )>= self.enemies.fire_rate and len(self.enemy_bullets_group)==0:
@@ -262,7 +289,7 @@ class Game(object):
             self.player_group.update(self.pressed_keys,screen)
             self.bullet_group.update(screen)
             self.enemy_bullets_group.update(screen)
-            self.enemy_group.update(currentTime)
+            self.sup_enemy_group.update(currentTime)
             self.enemies.update(screen)
             self.life_group.update(screen)
 
@@ -290,6 +317,8 @@ def main():
         over=game_instance.process_events()
 
         game_instance.run_game(DISPLAY_SCREEN)
+
+        game_instance.collisions(DISPLAY_SCREEN)
 
         game_instance.display(DISPLAY_SCREEN)
 
