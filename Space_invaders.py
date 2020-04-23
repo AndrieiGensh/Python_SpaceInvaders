@@ -10,15 +10,15 @@ PURPLE = (203, 0, 255)
 RED = (237, 28, 36)
 FONT = "font.ttf"
 
+f_name = pygame.font.match_font("arial")
+DISPLAY_SCREEN = pygame.display.set_mode((800, 600))
 
-class Text(object):
-    def __init__(self,text,t_font,size,colour,x,y):
-        self.font = pygame.font.Font(t_font, size)
-        self.surface = self.font.render(text, True, colour)
-        self.rect = self.surface.get_rect(topleft=(x, y))
-
-    def show(self,screen):
-        screen.blit(self.surface,self.rect)
+def print_mes(screen,message,size,colour,x_pos,y_pos):
+    font = pygame.font.Font(f_name,size)
+    text_sur = font.render(message,True,colour)
+    text_rect = text_sur.get_rect()
+    text_rect.midtop = (x_pos,y_pos)
+    screen.blit(text_sur,text_rect)
 
 class Life(pygame.sprite.Sprite):
     def __init__(self,position_x,position_y):
@@ -29,14 +29,14 @@ class Life(pygame.sprite.Sprite):
         self.rect=self.image.get_rect(topleft=(position_x,position_y))
         self.state=True
 
-    def update(self, screen):
-        screen.blit(self.image,self.rect)
+    def update(self):
+        DISPLAY_SCREEN.blit(self.image,self.rect)
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self,center_x,center_y,who_shoots,speed):
         pygame.sprite.Sprite.__init__(self)
 
-        self.image=pygame.image.load("bullet.png")
+        self.image=pygame.image.load("laser.png")
         self.rect=self.image.get_rect(topleft=(center_x,center_y))
         self.master=who_shoots
         self.direction=0
@@ -46,8 +46,8 @@ class Bullet(pygame.sprite.Sprite):
             self.direction=1
         self.speed=speed
 
-    def update(self,screen):
-        screen.blit(self.image,self.rect)
+    def update(self):
+        DISPLAY_SCREEN.blit(self.image,self.rect)
         self.rect.y+=self.direction*self.speed
         if self.direction==-1:
             if self.rect.y<=20:
@@ -63,21 +63,21 @@ class Player(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
 
-        self.image=pygame.image.load("ship.png")
+        self.image=pygame.image.load("p_ship.png")
         self.rect= self.image.get_rect(topleft=(370,550))
         self.movement_speed=5
         self.fire_rate=700
         self.timer=pygame.time.get_ticks()
 
-    def update(self, pressed_keys,screen):
+    def update(self, pressed_keys):
         if pressed_keys[pygame.K_LEFT]:
             if self.rect.x>=20:
                 self.rect.x-=self.movement_speed
-                screen.blit(self.image,self.rect)
+                DISPLAY_SCREEN.blit(self.image,self.rect)
         elif pressed_keys[pygame.K_RIGHT]:
             if self.rect.x<=740:
                 self.rect.x+=self.movement_speed
-                screen.blit(self.image, self.rect)
+                DISPLAY_SCREEN.blit(self.image, self.rect)
 
 class Enemy(pygame.sprite.Sprite):
     timer=pygame.time.get_ticks()
@@ -85,7 +85,7 @@ class Enemy(pygame.sprite.Sprite):
     def __init__(self,row,column):
         pygame.sprite.Sprite.__init__(self)
 
-        self.image=pygame.image.load("enemy.png")
+        self.image=pygame.image.load("e_ship.png")
         self.image=pygame.transform.scale(self.image,(40,35))
         self.rect=self.image.get_rect()
         self.rect.x=35+60*column
@@ -94,8 +94,8 @@ class Enemy(pygame.sprite.Sprite):
         self.column=column
         self.points_scored=50
 
-    def update(self,screen):
-        screen.blit(self.image,self.rect)
+    def update(self):
+        DISPLAY_SCREEN.blit(self.image,self.rect)
 
 
 class EnemyGroup(pygame.sprite.Group):
@@ -131,7 +131,7 @@ class EnemyGroup(pygame.sprite.Group):
             self.enemies_list[spr.row][spr.column]=None
             self.alive_indexes.remove(spr.row*10+spr.column)
 
-    def update(self,screen):
+    def update(self):
         current_time=pygame.time.get_ticks()
         if current_time-self.move_timer>=self.move_time:
             for enemy in self:
@@ -147,7 +147,7 @@ class EnemyGroup(pygame.sprite.Group):
                     for enemy in self:
                         enemy.rect.y += self.down_speed
             for enemy in self:
-                enemy.update(screen)
+                enemy.update()
             self.move_timer=pygame.time.get_ticks()
 
 
@@ -188,7 +188,7 @@ class Game(object):
 
     def __init__(self):
 
-        self.score=0;
+        self.score=0
 
         self.player=Player()
         #self.enemy=Enemy()
@@ -200,6 +200,8 @@ class Game(object):
         self.life3=Life(766,50)
 
         self.game_over=False
+        self.over_screen=False
+        self.new_game=True
 
         self.secret_iterator=0
 
@@ -210,7 +212,6 @@ class Game(object):
             for j in range(self.enemies.columns):
                 new_enemy = Enemy(i,j)
                 self.enemies.add(new_enemy)
-
 
         self.all_group = pygame.sprite.Group()
         self.player_group=pygame.sprite.Group()
@@ -229,6 +230,32 @@ class Game(object):
         self.sup_enemy_group.add(self.sup_enemy)
         self.player_group.add(self.player)
 
+    def game_over_screen(self):
+        print_mes(DISPLAY_SCREEN,"GAME OVER!",40,RED,400,150)
+        print_mes(DISPLAY_SCREEN,"Pess any key to start a new game",20,RED,400,300)
+        pygame.display.flip()
+        wait=True
+        while wait:
+            self.clock.tick(self.fps)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                if event.type == pygame.KEYUP:
+                    wait=False
+
+    def new_game_screen(self):
+        print_mes(DISPLAY_SCREEN, "WELCOME TO SPACE INVADERS", 40, RED, 400, 150)
+        print_mes(DISPLAY_SCREEN, "Press any key to start a new game", 20, RED, 400, 300)
+        pygame.display.flip()
+        wait = True
+        while wait:
+            self.clock.tick(self.fps)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                if event.type == pygame.KEYUP:
+                    wait = False
+
     def process_events(self):
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -236,11 +263,10 @@ class Game(object):
             else:
                 return False
 
-    def collisions(self,screen):
+    def collisions(self):
         for en in pygame.sprite.groupcollide(self.enemies,self.bullet_group,True,True).keys():
-            mes = Text(str(en.points_scored),FONT,20,PURPLE,en.rect.x,en.rect.y)
-            mes.show(screen)
             self.score+=en.points_scored
+            self.enemies.alive_enemies_count-=1
 
         for pl in pygame.sprite.groupcollide(self.player_group,self.enemy_bullets_group,False,True).keys():
             if self.life1.alive():
@@ -249,16 +275,20 @@ class Game(object):
                 self.life2.kill()
             elif self.life3.alive():
                 self.life3.kill()
-                mes = Text("Game Over!!!",FONT,50,RED,400,400)
-                mes.show(screen)
                 pl.kill()
-                self.game_over=True
+                self.over_screen=True
+                self.game_over_screen()
 
         for sup in pygame.sprite.groupcollide(self.sup_enemy_group,self.bullet_group,True,True).keys():
-            mes = Text(str(sup.points_scored), FONT, 50, BLUE, 400, 400)
-            mes.show(screen)
+            sup=Super_Enemy()
+            self.all_group.add(sup)
+            self.sup_enemy_group.add(sup)
 
-    def run_game(self,screen):
+    def run_game(self):
+
+        if self.new_game:
+            self.new_game_screen()
+            self.new_game=False
 
         if not self.game_over:
             currentTime=pygame.time.get_ticks()
@@ -275,7 +305,12 @@ class Game(object):
 
             current_Time=pygame.time.get_ticks()
             if (current_Time - self.enemies.timer )>= self.enemies.fire_rate and len(self.enemy_bullets_group)==0:
-                how_many_should_fire = random.randint(4, 8)
+                if self.enemies.alive_enemies_count<=4:
+                    how_many_should_fire=self.enemies.alive_enemies_count-1
+                elif self.enemies.alive_enemies_count==0:
+                    how_many_should_fire=0
+                else:
+                    how_many_should_fire = random.randint(4, 8)
                 list_of_firing_enemies = random.sample(self.enemies.alive_indexes, how_many_should_fire)
                 for enemy_index in list_of_firing_enemies:
                     r=enemy_index//10
@@ -286,17 +321,17 @@ class Game(object):
                 self.enemies.timer+=self.enemies.fire_rate
 
 
-            self.player_group.update(self.pressed_keys,screen)
-            self.bullet_group.update(screen)
-            self.enemy_bullets_group.update(screen)
+            self.player_group.update(self.pressed_keys)
+            self.bullet_group.update()
+            self.enemy_bullets_group.update()
             self.sup_enemy_group.update(currentTime)
-            self.enemies.update(screen)
-            self.life_group.update(screen)
+            self.enemies.update()
+            self.life_group.update()
 
-    def display(self,display_screen):
+    def display(self,):
 
         if not self.game_over:
-            self.all_group.draw(display_screen)
+            self.all_group.draw(DISPLAY_SCREEN)
         pygame.display.flip()
 
 def main():
@@ -304,10 +339,8 @@ def main():
     pygame.init()
     bg=pygame.image.load("space.png")
     bg=pygame.transform.scale(bg,(800,600))
-    DISPLAY_SCREEN = pygame.display.set_mode((800, 600))
-
     pygame.display.set_caption("Space invaders by Andriei Gensh")
-
+    DISPLAY_SCREEN.blit(bg, (0, 0))
     over = False
 
     game_instance=Game()
@@ -316,11 +349,11 @@ def main():
         DISPLAY_SCREEN.blit(bg,(0,0))
         over=game_instance.process_events()
 
-        game_instance.run_game(DISPLAY_SCREEN)
+        game_instance.run_game()
 
-        game_instance.collisions(DISPLAY_SCREEN)
+        game_instance.collisions()
 
-        game_instance.display(DISPLAY_SCREEN)
+        game_instance.display()
 
         game_instance.clock.tick(game_instance.fps)
 
