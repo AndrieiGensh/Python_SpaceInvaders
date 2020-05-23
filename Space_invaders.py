@@ -66,7 +66,7 @@ class Player(pygame.sprite.Sprite):
         self.image=pygame.image.load("p_ship.png")
         self.rect= self.image.get_rect(topleft=(370,550))
         self.movement_speed=5
-        self.fire_rate=700
+        self.fire_rate=100
         self.timer=pygame.time.get_ticks()
 
     def reset_position(self):
@@ -89,7 +89,7 @@ class Enemy(pygame.sprite.Sprite):
     def __init__(self,row,column):
         pygame.sprite.Sprite.__init__(self)
 
-        self.image=pygame.image.load("e_ship.png")
+        self.image=pygame.image.load("enemy.png")
         self.image=pygame.transform.scale(self.image,(40,35))
         self.rect=self.image.get_rect()
         self.rect.x=35+60*column
@@ -133,6 +133,10 @@ class EnemyGroup(pygame.sprite.Group):
         self.right_column_index = 9
         self.left_column_index = 0
         self.direction = 1
+        self.left_right_speed=30
+
+    def level_changes(self,current_level):
+        self.left_right_speed=30+(current_level%5)*5
 
     def check_border_columns(self):
         if self.alive_enemies_count==0:
@@ -142,7 +146,7 @@ class EnemyGroup(pygame.sprite.Group):
         found_left=False
         found_right=False
         for i in range(0,self.rows):
-            if self.enemies_list[i][self.left_column_index]!=None:
+            if self.enemies_list[i][self.left_column_index] is not None:
                 any_left=True
                 break
         if not any_left:
@@ -157,13 +161,13 @@ class EnemyGroup(pygame.sprite.Group):
                         break
 
         for i in range(0, self.rows):
-            if self.enemies_list[i][self.right_column_index] != None:
+            if self.enemies_list[i][self.right_column_index] is not None:
                 any_right = True
                 break
         if not any_right:
             print("right missing")
             print(range(self.right_column_index,self.left_column_index))
-            for col2 in range(self.right_column_index,self.left_column_index,-1):
+            for col2 in range(self.right_column_index,self.left_column_index-1,-1):
                 if found_right:
                     break
                 for row2 in range(0,self.rows):
@@ -175,8 +179,6 @@ class EnemyGroup(pygame.sprite.Group):
 
         print("left=",self.left_column_index)
         print("right=",self.right_column_index)
-
-
 
     def add_internal(self, *sprite):
         super(EnemyGroup,self).add_internal(*sprite)
@@ -260,6 +262,24 @@ class Game(object):
 
         self.level=0
 
+        self.background=pygame.image.load("space.png")
+        self.background=pygame.transform.scale(self.background,(800,600))
+
+        self.player = None
+        self.sup_enemy = None
+        self.enemies = None
+
+        self.life1 = None
+        self.life2 = None
+        self.life3 = None
+
+        self.all_group = None
+        self.life_group = None
+        self.player_group = None
+        self.sup_enemy_group = None
+        self.bullet_group = None
+        self.enemy_bullets_group = None
+
         self.game_over=False
         self.over_screen=False
         self.new_game=True
@@ -273,21 +293,22 @@ class Game(object):
 
     def reset(self,option):
         if option=="new_game_reset":
-            self.all_group.empty()
             self.player_group.empty()
             self.enemy_bullets_group.empty()
             self.enemies.empty()
+            self.enemies = EnemyGroup()
             self.sup_enemy_group.empty()
             self.bullet_group.empty()
             self.life_group.empty()
+            self.all_group.empty()
             self.enemies.reset_group_params()
         elif option=="next_level_reset":
             self.enemies.empty()
+            self.enemies = EnemyGroup()
             self.enemies.reset_group_params()
             self.bullet_group.empty()
             self.enemy_bullets_group.empty()
             self.sup_enemy_group.empty()
-
 
     def init_new_game(self):
         self.player=None
@@ -305,7 +326,6 @@ class Game(object):
         self.bullet_group = pygame.sprite.Group()
         self.enemy_bullets_group = pygame.sprite.Group()
 
-
     def create_enemies(self):
 
         for i in range(self.enemies.rows):
@@ -321,6 +341,7 @@ class Game(object):
             self.sup_enemy=Super_Enemy()
 
             self.create_enemies()
+            self.enemies.level_changes(self.level)
 
             self.life1 = Life(700, 50)
             self.life2 = Life(733, 50)
@@ -335,9 +356,10 @@ class Game(object):
             self.reset("next_level_reset")
             self.player.reset_position()
             self.create_enemies()
+            self.enemies.level_changes(self.level)
 
             self.sup_enemy_group.add(self.sup_enemy)
-
+            self.all_group.add(self.enemies)
 
     def update_all(self):
         currentTime = pygame.time.get_ticks()
@@ -349,6 +371,7 @@ class Game(object):
         self.life_group.update()
 
     def new_level_screen(self):
+        DISPLAY_SCREEN.blit(self.background, (0, 0))
         print_mes(DISPLAY_SCREEN,"LEVEL "+str(self.level),40,GREEN,400,150)
         print_mes(DISPLAY_SCREEN,"Press any key to start",20,GREEN,400,300)
         pygame.display.flip()
@@ -361,8 +384,8 @@ class Game(object):
                 if event.type == pygame.KEYUP:
                     wait = False
 
-
     def game_over_screen(self):
+        DISPLAY_SCREEN.blit(self.background, (0, 0))
         print_mes(DISPLAY_SCREEN,"GAME OVER!",40,RED,400,150)
         print_mes(DISPLAY_SCREEN,"Pess any key to start a new game",20,RED,400,300)
         pygame.display.flip()
@@ -379,6 +402,7 @@ class Game(object):
                     self.game_over=False
 
     def new_game_screen(self):
+        DISPLAY_SCREEN.blit(self.background,(0,0))
         print_mes(DISPLAY_SCREEN, "WELCOME TO SPACE INVADERS", 40, RED, 400, 150)
         print_mes(DISPLAY_SCREEN, "Press any key to start a new game", 20, RED, 400, 300)
         pygame.display.flip()
@@ -397,7 +421,6 @@ class Game(object):
                return True
             else:
                 return False
-
 
     def execute_logic(self):
         currentTime = pygame.time.get_ticks()
@@ -435,7 +458,6 @@ class Game(object):
                 self.enemy_bullets_group.add(enemy_bullet)
             self.enemies.timer += self.enemies.fire_rate
 
-
     def collisions(self):
         for en in pygame.sprite.groupcollide(self.enemies,self.bullet_group,True,True).keys():
             self.score+=en.points_scored
@@ -460,15 +482,20 @@ class Game(object):
         if self.new_game:
             self.init_new_game()
             self.new_game_screen()
-            self.create_level("new_game")
+
             self.new_level_screen()
+            self.create_level("new_game")
+
+            self.level=0
+
             self.next_level=False
             self.new_game=False
 
         if self.restart_game:
-            self.reset("new_game_reset")
-            self.create_level("new_game")
+            #self.reset("new_game_reset")
             self.new_level_screen()
+            self.level=0
+            self.create_level("new_game")
             self.next_level=False
             self.restart_game=False
 
@@ -477,9 +504,9 @@ class Game(object):
             self.game_over_screen()
 
         if self.next_level:
-            self.reset("next_level_reset")
-            self.create_level("next_level")
+            #self.reset("next_level_reset")
             self.new_level_screen()
+            self.create_level("next_level")
             self.next_level=False
 
         if not self.game_over:
