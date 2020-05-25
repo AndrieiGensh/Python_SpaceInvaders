@@ -63,7 +63,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
 
-        self.image=pygame.image.load("p_ship.png")
+        self.image=pygame.image.load("ship.png")
         self.rect= self.image.get_rect(topleft=(370,550))
         self.movement_speed=5
         self.fire_rate=100
@@ -88,8 +88,12 @@ class Enemy(pygame.sprite.Sprite):
 
     def __init__(self,row,column):
         pygame.sprite.Sprite.__init__(self)
-
-        self.image=pygame.image.load("enemy.png")
+        if row==0:
+            self.image=pygame.image.load("enemy.png")
+        elif row==2:
+            self.image=pygame.image.load("enemy2.png")
+        else:
+            self.image=pygame.image.load("enemy3.png")
         self.image=pygame.transform.scale(self.image,(40,35))
         self.rect=self.image.get_rect()
         self.rect.x=35+60*column
@@ -136,7 +140,7 @@ class EnemyGroup(pygame.sprite.Group):
         self.left_right_speed=30
 
     def level_changes(self,current_level):
-        self.left_right_speed=30+(current_level%5)*5
+        self.move_time-=current_level*20
 
     def check_border_columns(self):
         if self.alive_enemies_count==0:
@@ -241,6 +245,7 @@ class Super_Enemy(pygame.sprite.Sprite):
     def update(self,current_time):
         time=current_time-self.timer
         if time>=self.show_up_time:
+            pygame.mixer.Sound("mystery.wav").play()
             if self.direction==1:
                 self.rect.x+=self.speed
                 if self.rect.x>=800:
@@ -429,8 +434,9 @@ class Game(object):
 
         if self.pressed_keys[pygame.K_UP]:
             if (currentTime - self.player.timer) >= self.player.fire_rate and len(self.bullet_group) == 0:
-                p_bullet = Bullet(self.player.rect.x + 20, self.player.rect.y + 5, "player", 10)
+                p_bullet = Bullet(self.player.rect.x + 20, self.player.rect.y + 5, "player", 20)
                 self.bullet_group.add(p_bullet)
+                pygame.mixer.Sound("shoot.wav").play()
                 self.player.timer += self.player.fire_rate
             else:
                 pass
@@ -456,11 +462,13 @@ class Game(object):
                 enemy_bullet = Bullet(self.enemies.enemies_list[r][c].rect.x + 20,
                                       self.enemies.enemies_list[r][c].rect.y + 5, "enemy", random_speed)
                 self.enemy_bullets_group.add(enemy_bullet)
+            pygame.mixer.Sound("shoot2.wav").play()
             self.enemies.timer += self.enemies.fire_rate
 
     def collisions(self):
         for en in pygame.sprite.groupcollide(self.enemies,self.bullet_group,True,True).keys():
             self.score+=en.points_scored
+            pygame.mixer.Sound("invaderkilled.wav").play()
 
         for pl in pygame.sprite.groupcollide(self.player_group,self.enemy_bullets_group,False,True).keys():
             if self.life1.alive():
@@ -500,6 +508,7 @@ class Game(object):
             self.restart_game=False
 
         if self.over_screen:
+            self.level=0
             self.game_over=True
             self.game_over_screen()
 
