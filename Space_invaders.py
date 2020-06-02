@@ -378,7 +378,7 @@ class Game(object):
     def new_level_screen(self):
         DISPLAY_SCREEN.blit(self.background, (0, 0))
         print_mes(DISPLAY_SCREEN,"LEVEL "+str(self.level),40,GREEN,400,150)
-        print_mes(DISPLAY_SCREEN,"Press any key to start",20,GREEN,400,300)
+        print_mes(DISPLAY_SCREEN,"Press any key to start",30,GREEN,400,300)
         pygame.display.flip()
         wait = True
         while wait:
@@ -392,7 +392,7 @@ class Game(object):
     def game_over_screen(self):
         DISPLAY_SCREEN.blit(self.background, (0, 0))
         print_mes(DISPLAY_SCREEN,"GAME OVER!",40,RED,400,150)
-        print_mes(DISPLAY_SCREEN,"Pess any key to start a new game",20,RED,400,300)
+        print_mes(DISPLAY_SCREEN,"Pess any key to start a new game",30,RED,400,300)
         pygame.display.flip()
         wait=True
         while wait:
@@ -409,7 +409,7 @@ class Game(object):
     def new_game_screen(self):
         DISPLAY_SCREEN.blit(self.background,(0,0))
         print_mes(DISPLAY_SCREEN, "WELCOME TO SPACE INVADERS", 40, RED, 400, 150)
-        print_mes(DISPLAY_SCREEN, "Press any key to start a new game", 20, RED, 400, 300)
+        print_mes(DISPLAY_SCREEN, "Press any key to start a new game", 30, RED, 400, 300)
         pygame.display.flip()
         wait = True
         while wait:
@@ -419,6 +419,10 @@ class Game(object):
                     pygame.quit()
                 if event.type == pygame.KEYUP:
                     wait = False
+
+    def view_score(self):
+        print_mes(DISPLAY_SCREEN,"SCORE: {0}".format(self.score),15,GREEN,40,20)
+        pygame.display.flip()
 
     def process_events(self):
         for event in pygame.event.get():
@@ -479,10 +483,12 @@ class Game(object):
                 self.life3.kill()
                 pl.kill()
                 self.over_screen=True
+                self.score = 0
 
         for sup in pygame.sprite.groupcollide(self.sup_enemy_group,self.bullet_group,True,True).keys():
             sup=Super_Enemy()
             self.all_group.add(sup)
+            self.score+=200
             self.sup_enemy_group.add(sup)
 
     def run_game(self):
@@ -534,6 +540,7 @@ class Game(object):
 
         if not self.game_over:
             self.all_group.draw(DISPLAY_SCREEN)
+            self.view_score()
         pygame.display.flip()
 
 def main():
