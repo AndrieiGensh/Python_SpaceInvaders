@@ -204,6 +204,7 @@ class EnemyGroup(pygame.sprite.Group):
         self.left_column_index = 0
         self.direction = 1
         self.left_right_speed = 30
+        self.move_time = 600
 
     def level_changes(self, current_level):
         """
@@ -257,7 +258,7 @@ class EnemyGroup(pygame.sprite.Group):
     def add_internal(self, *sprite):
         """
         Overridden sprite class function. Defines the way an enemy should be added
-        :param sprite: basically it is an enemy that is about to be added
+        :param sprite: basically it is an enemy object that is about to be added
         """
         super(EnemyGroup, self).add_internal(*sprite)
         for spr in sprite:
