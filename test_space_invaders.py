@@ -4,6 +4,7 @@ import random
 
 
 class EnemyGroupTest (unittest.TestCase):
+
     enemygroup = Space_invaders.EnemyGroup()
 
     def test_level_changes(self):
@@ -37,7 +38,6 @@ class EnemyGroupTest (unittest.TestCase):
         """
         Tests the behavior of the borders checking method. Simulated situation -
         there is only one enemy left alive
-        :return:
         """
         index = random.randint(0, 29)
 
@@ -50,3 +50,18 @@ class EnemyGroupTest (unittest.TestCase):
         self.assertTrue((self.enemygroup.right_column_index == int(index%10))
                         and (self.enemygroup.left_column_index == int(index%10)))
 
+    def test_movement_speed_changes(self):
+        """
+        Tests how an enemy's movement speed changes, depending on
+        how many of then left alive
+        """
+
+        self.enemygroup.reset_group_params()
+
+        self.assertTrue(self.enemygroup.move_time == 600)
+
+        self.enemygroup.alive_enemies_count = 10
+
+        self.enemygroup.update()
+
+        self.assertTrue(self.enemygroup.move_time == (600 - 15 * (30 - 10)))
