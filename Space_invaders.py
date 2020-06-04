@@ -8,7 +8,6 @@ YELLOW = (241, 255, 0)
 BLUE = (80, 255, 239)
 PURPLE = (203, 0, 255)
 RED = (237, 28, 36)
-FONT = "font.ttf"
 
 f_name = pygame.font.match_font("arial")
 DISPLAY_SCREEN = pygame.display.set_mode((800, 600))
@@ -41,7 +40,7 @@ class Life(pygame.sprite.Sprite):
         position_x, positions_y - obvious 
         """
 
-        self.image = pygame.image.load("ship.png")
+        self.image = pygame.image.load("images\ship.png")
         self.image = pygame.transform.scale(self.image, (23, 23))
         self.rect = self.image.get_rect(topleft=(position_x, position_y))
         self.state = True  # alive or not
@@ -58,7 +57,7 @@ class Bullet(pygame.sprite.Sprite):
     def __init__(self, center_x, center_y, who_shoots, speed):
         pygame.sprite.Sprite.__init__(self)
 
-        self.image = pygame.image.load("laser.png")
+        self.image = pygame.image.load("images\laser.png")
         self.rect = self.image.get_rect(topleft=(center_x, center_y))
         self.master = who_shoots
         self.direction = 0
@@ -99,7 +98,7 @@ class Player(pygame.sprite.Sprite):
         """
         pygame.sprite.Sprite.__init__(self)
 
-        self.image = pygame.image.load("ship.png")
+        self.image = pygame.image.load("images\ship.png")
         self.rect = self.image.get_rect(topleft=(370, 550))
         self.movement_speed = 5
         self.fire_rate = 100
@@ -142,20 +141,20 @@ class Enemy(pygame.sprite.Sprite):
         """
         pygame.sprite.Sprite.__init__(self)
         if row == 0:
-            self.image = pygame.image.load("enemy1.png")
-            self.images = [pygame.transform.scale(pygame.image.load("enemy1.png"), (40, 35)),
-                           pygame.transform.scale(pygame.image.load("enemy1_2.png"), (40, 35))]
-            self.death_image = pygame.transform.scale(pygame.image.load("explosionpurple.png"), (40, 35))
+            self.image = pygame.image.load("images\enemy1.png")
+            self.images = [pygame.transform.scale(pygame.image.load("images\enemy1.png"), (40, 35)),
+                           pygame.transform.scale(pygame.image.load("images\enemy1_2.png"), (40, 35))]
+            self.death_image = pygame.transform.scale(pygame.image.load("images\explosionpurple.png"), (40, 35))
         elif row == 2:
-            self.image = pygame.image.load("enemy2.png")
-            self.images = [pygame.transform.scale(pygame.image.load("enemy2.png"), (40, 35)),
-                           pygame.transform.scale(pygame.image.load("enemy2_2.png"), (40, 35))]
-            self.death_image = pygame.transform.scale(pygame.image.load("explosionblue.png"), (40, 35))
+            self.image = pygame.image.load("images\enemy2.png")
+            self.images = [pygame.transform.scale(pygame.image.load("images\enemy2.png"), (40, 35)),
+                           pygame.transform.scale(pygame.image.load("images\enemy2_2.png"), (40, 35))]
+            self.death_image = pygame.transform.scale(pygame.image.load("images\explosionblue.png"), (40, 35))
         else:
-            self.image = pygame.image.load("enemy3.png")
-            self.images = [pygame.transform.scale(pygame.image.load("enemy3.png"), (40, 35)),
-                           pygame.transform.scale(pygame.image.load("enemy3_2.png"), (40, 35))]
-            self.death_image = pygame.transform.scale(pygame.image.load("explosiongreen.png"), (40, 35))
+            self.image = pygame.image.load("images\enemy3.png")
+            self.images = [pygame.transform.scale(pygame.image.load("images\enemy3.png"), (40, 35)),
+                           pygame.transform.scale(pygame.image.load("images\enemy3_2.png"), (40, 35))]
+            self.death_image = pygame.transform.scale(pygame.image.load("images\explosiongreen.png"), (40, 35))
         self.image = pygame.transform.scale(self.image, (40, 35))
         self.rect = self.image.get_rect()
         self.rect.x = 35 + 60 * column
@@ -332,7 +331,7 @@ class SuperEnemy(pygame.sprite.Sprite):
         """
         pygame.sprite.Sprite.__init__(self)
 
-        self.image = pygame.image.load("sup_enemy.png")
+        self.image = pygame.image.load("images\sup_enemy.png")
         self.image = pygame.transform.scale(self.image, (50, 35))
         self.rect = self.image.get_rect()
         self.rect.x = -70
@@ -352,7 +351,7 @@ class SuperEnemy(pygame.sprite.Sprite):
         """
         time = current_time - self.timer
         if time >= self.show_up_time:
-            pygame.mixer.Sound("mystery.wav").play()
+            pygame.mixer.Sound("sounds\mystery.wav").play()
             if self.direction == 1:
                 self.rect.x += self.speed
                 if self.rect.x >= 800:
@@ -386,7 +385,7 @@ class Game(object):
 
         self.pressed_keys = None  # list of currently pressed keys
 
-        self.background = pygame.image.load("space.png")  # loads a needed background image
+        self.background = pygame.image.load("images\space.png")  # loads a needed background image
         self.background = pygame.transform.scale(self.background, (800, 600))
 
         self.dim_screen = pygame.Surface(DISPLAY_SCREEN.get_size()).convert_alpha()
@@ -637,7 +636,7 @@ class Game(object):
             if (current_time - self.player.timer) >= self.player.fire_rate and len(self.bullet_group) == 0:
                 p_bullet = Bullet(self.player.rect.x + 20, self.player.rect.y + 5, "player", 20)
                 self.bullet_group.add(p_bullet)
-                pygame.mixer.Sound("shoot.wav").play()
+                pygame.mixer.Sound("sounds\shoot.wav").play()
                 self.player.timer += self.player.fire_rate
             else:
                 pass
@@ -662,7 +661,7 @@ class Game(object):
                 enemy_bullet = Bullet(self.enemies.enemies_list[r][c].rect.x + 20,
                                       self.enemies.enemies_list[r][c].rect.y + 5, "enemy", random_speed)
                 self.enemy_bullets_group.add(enemy_bullet)
-            pygame.mixer.Sound("shoot2.wav").play()
+            pygame.mixer.Sound("sounds\shoot2.wav").play()
             self.enemies.timer = current_time
 
     def check_enemies_positions(self):
@@ -684,7 +683,7 @@ class Game(object):
         """
         for en in pygame.sprite.groupcollide(self.enemies, self.bullet_group, False, True).keys():
             self.score += en.points_scored
-            pygame.mixer.Sound("invaderkilled.wav").play()
+            pygame.mixer.Sound("sounds\invaderkilled.wav").play()
             en.image = en.death_image
             en.update()
             en.kill()
@@ -774,7 +773,7 @@ def main():
     Main function. Creates the instance of the game, sets the DISPLAY variable.
     """
     pygame.init()
-    bg = pygame.image.load("space.png")
+    bg = pygame.image.load("images\space.png")
     bg = pygame.transform.scale(bg, (800, 600))
     pygame.display.set_caption("Space invaders by Andriei Gensh")
     DISPLAY_SCREEN.blit(bg, (0, 0))
