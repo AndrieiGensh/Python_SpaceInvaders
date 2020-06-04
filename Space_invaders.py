@@ -290,6 +290,7 @@ class EnemyGroup(pygame.sprite.Group):
         """
         Updated each enemies position if it is the right time
         """
+        self.move_time = 600 - (30 - self.alive_enemies_count) * 15
 
         current_time = pygame.time.get_ticks()
         if current_time - self.move_timer >= self.move_time:
