@@ -142,11 +142,20 @@ class Enemy(pygame.sprite.Sprite):
         """
         pygame.sprite.Sprite.__init__(self)
         if row == 0:
-            self.image = pygame.image.load("enemy.png")
+            self.image = pygame.image.load("enemy1.png")
+            self.images = [pygame.transform.scale(pygame.image.load("enemy1.png"), (40, 35)),
+                           pygame.transform.scale(pygame.image.load("enemy1_2.png"), (40, 35))]
+            self.death_image = pygame.transform.scale(pygame.image.load("explosionpurple.png"), (40, 35))
         elif row == 2:
             self.image = pygame.image.load("enemy2.png")
+            self.images = [pygame.transform.scale(pygame.image.load("enemy2.png"), (40, 35)),
+                           pygame.transform.scale(pygame.image.load("enemy2_2.png"), (40, 35))]
+            self.death_image = pygame.transform.scale(pygame.image.load("explosionblue.png"), (40, 35))
         else:
             self.image = pygame.image.load("enemy3.png")
+            self.images = [pygame.transform.scale(pygame.image.load("enemy3.png"), (40, 35)),
+                           pygame.transform.scale(pygame.image.load("enemy3_2.png"), (40, 35))]
+            self.death_image = pygame.transform.scale(pygame.image.load("explosiongreen.png"), (40, 35))
         self.image = pygame.transform.scale(self.image, (40, 35))
         self.rect = self.image.get_rect()
         self.rect.x = 35 + 60 * column
@@ -186,6 +195,8 @@ class EnemyGroup(pygame.sprite.Group):
         self.down_speed = 30
         self.left_right_speed = 30
         self.move_time = 600
+
+        self.frame_counter = 0
 
         self.move_timer = pygame.time.get_ticks()
         self.timer = pygame.time.get_ticks()
@@ -245,7 +256,6 @@ class EnemyGroup(pygame.sprite.Group):
                 any_right = True
                 break
         if not any_right:
-            print(range(self.right_column_index, self.left_column_index))
             for col2 in range(self.right_column_index, self.left_column_index - 1, -1):
                 if found_right:
                     break
@@ -283,8 +293,10 @@ class EnemyGroup(pygame.sprite.Group):
 
         current_time = pygame.time.get_ticks()
         if current_time - self.move_timer >= self.move_time:
+            self.frame_counter = (self.frame_counter + 1) % 2
             for enemy in self:
                 enemy.rect.x += self.direction * self.left_right_speed
+                enemy.image = enemy.images[self.frame_counter]
             if self.direction == 1:
                 for row in range(0, self.rows):
                     if isinstance(self.enemies_list[row][self.right_column_index], Enemy):
@@ -631,7 +643,6 @@ class Game(object):
 
         current_time = pygame.time.get_ticks()
         if (current_time - self.enemies.timer) >= self.enemies.fire_rate and len(self.enemy_bullets_group) == 0:
-            print(self.enemies.alive_indexes)
             if 8 >= self.enemies.alive_enemies_count > 4:
                 how_many_should_fire = 5
             elif self.enemies.alive_enemies_count <= 4 and self.enemies.alive_enemies_count != 0:
@@ -640,9 +651,9 @@ class Game(object):
                 how_many_should_fire = 0
             else:
                 how_many_should_fire = random.randint(4, 8)
-            print("shpild fire=", how_many_should_fire)
-            print(self.enemies.alive_enemies_count)
+
             list_of_firing_enemies = random.sample(self.enemies.alive_indexes, how_many_should_fire)
+
             for enemy_index in list_of_firing_enemies:
                 r = enemy_index // 10
                 c = enemy_index % 10
@@ -651,15 +662,31 @@ class Game(object):
                                       self.enemies.enemies_list[r][c].rect.y + 5, "enemy", random_speed)
                 self.enemy_bullets_group.add(enemy_bullet)
             pygame.mixer.Sound("shoot2.wav").play()
-            self.enemies.timer += self.enemies.fire_rate
+            self.enemies.timer = current_time
+
+    def check_enemies_positions(self):
+        """
+        Checks if any of the enemies has crossed "the line". If the enemy's y coordinate is
+        greater or equal to 510 (basically the lower gamescreen border) - it means, that
+        player has failed to protect the Earth from the invaders and the game ends
+        """
+        for en in self.enemies:
+            if en.rect.y >= 510:
+                self.player.kill()
+                self.score = 0
+                self.over_screen = True
+                break
 
     def collisions(self):
         """
         Checks for the possible collisions of different sprites and manages their "deaths"
         """
-        for en in pygame.sprite.groupcollide(self.enemies, self.bullet_group, True, True).keys():
+        for en in pygame.sprite.groupcollide(self.enemies, self.bullet_group, False, True).keys():
             self.score += en.points_scored
             pygame.mixer.Sound("invaderkilled.wav").play()
+            en.image = en.death_image
+            en.update()
+            en.kill()
 
         for pl in pygame.sprite.groupcollide(self.player_group, self.enemy_bullets_group, False, True).keys():
             if self.life1.alive():
@@ -694,7 +721,6 @@ class Game(object):
             self.new_game = False
 
         if self.restart_game:
-            # self.reset("new_game_reset")
             self.new_level_screen()
             self.level = 0
             self.create_level("new_game")
@@ -704,10 +730,10 @@ class Game(object):
         if self.over_screen:
             self.level = 0
             self.game_over = True
+            self.reset("new_game_reset")
             self.game_over_screen()
 
         if self.next_level:
-            # self.reset("next_level_reset")
             self.new_level_screen()
             self.create_level("next_level")
             self.next_level = False
@@ -724,6 +750,8 @@ class Game(object):
                 self.collisions()
 
                 self.update_all()
+
+                self.check_enemies_positions()
 
                 if self.enemies.alive_enemies_count == 0 and self.player.alive():
                     self.next_level = True
@@ -743,7 +771,6 @@ class Game(object):
 def main():
     """
     Main function. Creates the instance of the game, sets the DISPLAY variable.
-    :return:
     """
     pygame.init()
     bg = pygame.image.load("space.png")
