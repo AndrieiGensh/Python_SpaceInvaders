@@ -1,5 +1,11 @@
+"""random library"""
 import random
+
+"""python pygame library"""
 import pygame
+
+"""the file used to load all the necessary assets """
+import assets
 
 WHITE = (255, 255, 255)
 GREEN = (78, 255, 87)
@@ -7,12 +13,16 @@ YELLOW = (241, 255, 0)
 BLUE = (80, 255, 239)
 PURPLE = (203, 0, 255)
 RED = (237, 28, 36)
+# these are the constants that describe the direction of
+# a moving object
+DOWN = 1
+UP = -1
 
-F_NAME = pygame.font.match_font("arial")
+FONT_NAME = pygame.font.match_font("arial")
 DISPLAY_SCREEN = pygame.display.set_mode((800, 600))
 
 
-def print_mes(screen, message, size, colour, x_pos, y_pos):
+def print_message(screen, message, size, colour, x_position, y_position):
     """ Function prints out a message in a specified position on the screen
     screen - object, that pygame.display.set_mode() returns
     message - mesage you would like to be printed
@@ -20,11 +30,11 @@ def print_mes(screen, message, size, colour, x_pos, y_pos):
     colour - text colour
     x_pos, y_pos - position of the message on the screen
     """
-    font = pygame.font.Font(F_NAME, size)
-    text_sur = font.render(message, True, colour)
-    text_rect = text_sur.get_rect()
-    text_rect.midtop = (x_pos, y_pos)
-    screen.blit(text_sur, text_rect)
+    font = pygame.font.Font(FONT_NAME, size)
+    text_surface = font.render(message, True, colour)
+    text_rectangle = text_surface.get_rect()
+    text_rectangle.midtop = (x_position, y_position)
+    screen.blit(text_surface, text_rectangle)
 
 
 class Life(pygame.sprite.Sprite):
@@ -33,12 +43,12 @@ class Life(pygame.sprite.Sprite):
     """
 
     def __init__(self, position_x, position_y):
-        pygame.sprite.Sprite.__init__(self)
+        super().__init__()
         """
         Initializes the object.
         position_x, positions_y - obvious
         """
-        self.image = pygame.image.load("images\ship.png")
+        self.image = assets.Assets.SHIP_IMAGE
         self.image = pygame.transform.scale(self.image, (23, 23))
         self.rect = self.image.get_rect(topleft=(position_x, position_y))
         self.state = True  # alive or not
@@ -57,16 +67,15 @@ class Bullet(pygame.sprite.Sprite):
     """
 
     def __init__(self, center_x, center_y, who_shoots, speed):
-        pygame.sprite.Sprite.__init__(self)
+        super().__init__()
 
-        self.image = pygame.image.load("images\laser.png")
+        self.image = assets.Assets.LASER_IMAGE
         self.rect = self.image.get_rect(topleft=(center_x, center_y))
         self.master = who_shoots
-        self.direction = 0
         if self.master == "player":
-            self.direction = -1
+            self.direction = UP
         else:
-            self.direction = 1
+            self.direction = DOWN
         self.speed = speed
 
     def update(self):
@@ -76,7 +85,7 @@ class Bullet(pygame.sprite.Sprite):
         """
         DISPLAY_SCREEN.blit(self.image, self.rect)
         self.rect.y += self.direction * self.speed
-        if self.direction == -1:
+        if self.direction == UP:
             if self.rect.y <= 20:
                 self.kill()
         else:
@@ -94,15 +103,15 @@ class Player(pygame.sprite.Sprite):
     def __init__(self):
         """
         image - player's ship image
-        rect - sprite dimensions
+        rectangle - sprite dimensions
         movement_speed - how fast a player can move. Defines the distance
                                 (in pixels) that a ship can travel at once
         fire_rate - minimum delay before firing
-        timer - serves as a timer (worls in pair with the fire_rate field)
+        timer - serves as a timer (works in pair with the fire_rate field)
         """
-        pygame.sprite.Sprite.__init__(self)
+        super().__init__()
 
-        self.image = pygame.image.load("images\ship.png")
+        self.image = assets.Assets.PLAYER_IMAGE
         self.rect = self.image.get_rect(topleft=(370, 550))
         self.movement_speed = 5
         self.fire_rate = 100
@@ -146,22 +155,19 @@ class Enemy(pygame.sprite.Sprite):
         :param row: what row is an enemy in
         :param column: what column is an enemy in
         """
-        pygame.sprite.Sprite.__init__(self)
+        super().__init__()
         if row == 0:
-            self.image = pygame.image.load("images\enemy1.png")
-            self.images = [pygame.transform.scale(pygame.image.load("images\enemy1.png"), (40, 35)),
-                           pygame.transform.scale(pygame.image.load("images\enemy1_2.png"), (40, 35))]
-            self.death_image = pygame.transform.scale(pygame.image.load("images\explosionpurple.png"), (40, 35))
+            self.image = assets.Assets.ENEMY_1_IMAGE
+            self.images = assets.Assets.ENEMY_1_ANIMATION
+            self.death_image = assets.Assets.ENEMY_1_DEATH
         elif row == 2:
-            self.image = pygame.image.load("images\enemy2.png")
-            self.images = [pygame.transform.scale(pygame.image.load("images\enemy2.png"), (40, 35)),
-                           pygame.transform.scale(pygame.image.load("images\enemy2_2.png"), (40, 35))]
-            self.death_image = pygame.transform.scale(pygame.image.load("images\explosionblue.png"), (40, 35))
+            self.image = assets.Assets.ENEMY_2_IMAGE
+            self.images = assets.Assets.ENEMY_2_ANIMATION
+            self.death_image = assets.Assets.ENEMY_2_DEATH
         else:
-            self.image = pygame.image.load("images\enemy3.png")
-            self.images = [pygame.transform.scale(pygame.image.load("images\enemy3.png"), (40, 35)),
-                           pygame.transform.scale(pygame.image.load("images\enemy3_2.png"), (40, 35))]
-            self.death_image = pygame.transform.scale(pygame.image.load("images\explosiongreen.png"), (40, 35))
+            self.image = assets.Assets.ENEMY_3_IMAGE
+            self.images = assets.Assets.ENEMY_3_ANIMATION
+            self.death_image = assets.Assets.ENEMY_3_DEATH
         self.image = pygame.transform.scale(self.image, (40, 35))
         self.rect = self.image.get_rect()
         self.rect.x = 35 + 60 * column
@@ -190,7 +196,7 @@ class EnemyGroup(pygame.sprite.Group):
         Sets their's positions, general fire rate, movement
         speed and so on
         """
-        pygame.sprite.Group.__init__(self)
+        super().__init__()
         self.rows = 3
         self.columns = 10
         # useful to now how many enemies are still alive
@@ -202,7 +208,7 @@ class EnemyGroup(pygame.sprite.Group):
                              for _ in range(self.rows)]
         self.right_column_index = 9
         self.left_column_index = 0
-        self.direction = 1
+        self.direction = DOWN
         self.fire_rate = 3000
         # different bullets speeds to chose from
         self.bullet_speeds = [7, 10, 12, 15]
@@ -217,7 +223,7 @@ class EnemyGroup(pygame.sprite.Group):
         self.timer = pygame.time.get_ticks()
         self.delay_timer = pygame.time.get_ticks()
 
-    def reset_group_params(self):
+    def reset_group_parameters(self):
         """
         Resets the group totally.
         """
@@ -229,7 +235,7 @@ class EnemyGroup(pygame.sprite.Group):
                              for _ in range(self.rows)]
         self.right_column_index = 9
         self.left_column_index = 0
-        self.direction = 1
+        self.direction = DOWN
         self.left_right_speed = 30
         self.move_time = 600
 
@@ -261,13 +267,13 @@ class EnemyGroup(pygame.sprite.Group):
                 any_left = True
                 break
         if not any_left:
-            for col in range(self.left_column_index,
-                             self.right_column_index + 1):
+            for column in range(self.left_column_index,
+                                self.right_column_index + 1):
                 if found_left:
                     break
                 for row in range(0, self.rows):
-                    if isinstance(self.enemies_list[row][col], Enemy):
-                        self.left_column_index = col
+                    if isinstance(self.enemies_list[row][column], Enemy):
+                        self.left_column_index = column
                         found_left = True
                         break
 
@@ -276,13 +282,13 @@ class EnemyGroup(pygame.sprite.Group):
                 any_right = True
                 break
         if not any_right:
-            for col2 in range(self.right_column_index,
-                              self.left_column_index - 1, -1):
+            for column in range(self.right_column_index,
+                                self.left_column_index - 1, -1):
                 if found_right:
                     break
-                for row2 in range(0, self.rows):
-                    if isinstance(self.enemies_list[row2][col2], Enemy):
-                        self.right_column_index = col2
+                for row in range(0, self.rows):
+                    if isinstance(self.enemies_list[row][column], Enemy):
+                        self.right_column_index = column
                         found_right = True
                         break
 
@@ -293,9 +299,9 @@ class EnemyGroup(pygame.sprite.Group):
         :param sprite: basically it is an enemy object that is about
          to be added
         """
-        super(EnemyGroup, self).add_internal(*sprite)
-        for spr in sprite:
-            self.enemies_list[spr.row][spr.column] = spr
+        super().add_internal(*sprite)
+        for new_sprite in sprite:
+            self.enemies_list[new_sprite.row][new_sprite.column] = new_sprite
 
     def remove_internal(self, *sprite):
         """
@@ -304,10 +310,10 @@ class EnemyGroup(pygame.sprite.Group):
         :param sprite: basically it is an enemy that is killed but not
         yet deleted from the group
         """
-        super(EnemyGroup, self).remove_internal(*sprite)
-        for spr in sprite:
-            self.enemies_list[spr.row][spr.column] = None
-            self.alive_indexes.remove((spr.row * 10 + spr.column))
+        super().remove_internal(*sprite)
+        for new_sprite in sprite:
+            self.enemies_list[new_sprite.row][new_sprite.column] = None
+            self.alive_indexes.remove((new_sprite.row * 10 + new_sprite.column))
             self.alive_enemies_count -= 1
             self.check_border_columns()
 
@@ -323,11 +329,11 @@ class EnemyGroup(pygame.sprite.Group):
             for enemy in self:
                 enemy.rect.x += self.direction * self.left_right_speed
                 enemy.image = enemy.images[self.frame_counter]
-            if self.direction == 1:
+            if self.direction == DOWN:
                 for row in range(0, self.rows):
                     if isinstance(self.enemies_list[row][self.right_column_index], Enemy):
                         if self.enemies_list[row][self.right_column_index].rect.x >= 725:
-                            self.direction = -1
+                            self.direction = UP
                             for enemy in self:
                                 enemy.rect.y += self.down_speed
                         break
@@ -335,7 +341,7 @@ class EnemyGroup(pygame.sprite.Group):
                 for row in range(0, self.rows):
                     if isinstance(self.enemies_list[row][self.left_column_index], Enemy):
                         if self.enemies_list[row][self.left_column_index].rect.x <= 35:
-                            self.direction = 1
+                            self.direction = DOWN
                             for enemy in self:
                                 enemy.rect.y += self.down_speed
                         break
@@ -357,15 +363,15 @@ class SuperEnemy(pygame.sprite.Sprite):
         position and so on.
         No arguments needed to be passed
         """
-        pygame.sprite.Sprite.__init__(self)
+        super().__init__()
 
-        self.image = pygame.image.load("images\sup_enemy.png")
+        self.image = assets.Assets.MYSTERY_IMAGE
         self.image = pygame.transform.scale(self.image, (50, 35))
         self.rect = self.image.get_rect()
         self.rect.x = -70
         self.rect.y = 30
         self.speed = 6
-        self.direction = 1
+        self.direction = DOWN
 
         self.points_scored = 500
         self.show_up_time = 20000
@@ -380,18 +386,18 @@ class SuperEnemy(pygame.sprite.Sprite):
         """
         time = current_time - self.timer
         if time >= self.show_up_time:
-            pygame.mixer.Sound("sounds\mystery.wav").play()
-            if self.direction == 1:
+            assets.Assets.MYSTERY_SOUND.play()
+            if self.direction == DOWN:
                 self.rect.x += self.speed
                 if self.rect.x >= 800:
-                    self.direction = -1
+                    self.direction = UP
                     self.rect.x = 870
                     self.timer = pygame.time.get_ticks()
             else:
                 self.rect.x -= self.speed
                 if self.rect.x <= -30:
                     self.rect.x = -100
-                    self.direction = 1
+                    self.direction = DOWN
                     self.timer = pygame.time.get_ticks()
 
 
@@ -411,21 +417,17 @@ class Game(object):
         """
 
         self.score = 0  # points that player can score
-
         self.level = 0  # current game level
-
         self.pressed_keys = None  # list of currently pressed keys
-
         # loads a needed background image
-        self.background = pygame.image.load("images\space.png")
+        self.background = assets.Assets.BACK_GROUND
         self.background = pygame.transform.scale(self.background,
                                                  (800, 600))
-
         self.dim_screen = pygame.Surface(DISPLAY_SCREEN.get_size()).convert_alpha()
         self.dim_screen.fill((0, 0, 0, 180))
 
         self.player = None
-        self.sup_enemy = None
+        self.super_enemy = None
         self.enemies = None
 
         self.life1 = None
@@ -438,7 +440,7 @@ class Game(object):
         self.all_group = None
         self.life_group = None
         self.player_group = None
-        self.sup_enemy_group = None
+        self.super_enemy_group = None
         self.bullet_group = None
         self.enemy_bullets_group = None
 
@@ -471,19 +473,19 @@ class Game(object):
             self.enemy_bullets_group.empty()
             self.enemies.empty()
             self.enemies = EnemyGroup()
-            self.sup_enemy_group.empty()
+            self.super_enemy_group.empty()
             self.bullet_group.empty()
             self.life_group.empty()
             self.all_group.empty()
-            self.enemies.reset_group_params()
+            self.enemies.reset_group_parameters()
             pygame.display.flip()
         elif option == "next_level_reset":
             self.enemies.empty()
             self.enemies = EnemyGroup()
-            self.enemies.reset_group_params()
+            self.enemies.reset_group_parameters()
             self.bullet_group.empty()
             self.enemy_bullets_group.empty()
-            self.sup_enemy_group.empty()
+            self.super_enemy_group.empty()
             pygame.display.flip()
 
     def init_new_game(self):
@@ -498,7 +500,7 @@ class Game(object):
         self.all_group = pygame.sprite.Group()
         self.life_group = pygame.sprite.Group()
         self.player_group = pygame.sprite.Group()
-        self.sup_enemy_group = pygame.sprite.Group()
+        self.super_enemy_group = pygame.sprite.Group()
         self.bullet_group = pygame.sprite.Group()
         self.enemy_bullets_group = pygame.sprite.Group()
 
@@ -530,7 +532,7 @@ class Game(object):
             self.reset("new_game_reset")
 
             self.player = Player()
-            self.sup_enemy = SuperEnemy()
+            self.super_enemy = SuperEnemy()
 
             self.create_enemies()
             self.enemies.level_changes(self.level)
@@ -541,8 +543,8 @@ class Game(object):
 
             self.life_group.add(self.life1, self.life2, self.life3)
             self.player_group.add(self.player)
-            self.sup_enemy_group.add(self.sup_enemy)
-            self.all_group.add(self.player, self.enemies, self.sup_enemy,
+            self.super_enemy_group.add(self.super_enemy)
+            self.all_group.add(self.player, self.enemies, self.super_enemy,
                                self.life1, self.life2, self.life3)
 
         elif option == "next_level":
@@ -551,7 +553,7 @@ class Game(object):
             self.create_enemies()
             self.enemies.level_changes(self.level)
 
-            self.sup_enemy_group.add(self.sup_enemy)
+            self.super_enemy_group.add(self.super_enemy)
             self.all_group.add(self.enemies)
 
     def update_all(self):
@@ -562,7 +564,7 @@ class Game(object):
         self.player_group.update(self.pressed_keys)
         self.bullet_group.update()
         self.enemy_bullets_group.update()
-        self.sup_enemy_group.update(current_time)
+        self.super_enemy_group.update(current_time)
         self.enemies.update()
         self.life_group.update()
 
@@ -573,7 +575,7 @@ class Game(object):
         player pressed any key
         """
         DISPLAY_SCREEN.blit(self.dim_screen, (0, 0))
-        print_mes(DISPLAY_SCREEN, "Paused", 40, GREEN, 400, 300)
+        print_message(DISPLAY_SCREEN, "Paused", 40, GREEN, 400, 300)
         pygame.display.flip()
         wait = True
         while wait:
@@ -593,10 +595,10 @@ class Game(object):
         player pressed any key
         """
         DISPLAY_SCREEN.blit(self.background, (0, 0))
-        print_mes(DISPLAY_SCREEN, "LEVEL " + str(self.level), 40,
-                  GREEN, 400, 150)
-        print_mes(DISPLAY_SCREEN, "Press any key to start", 30,
-                  GREEN, 400, 300)
+        print_message(DISPLAY_SCREEN, "LEVEL " + str(self.level), 40,
+                      GREEN, 400, 150)
+        print_message(DISPLAY_SCREEN, "Press any key to start", 30,
+                      GREEN, 400, 300)
         pygame.display.flip()
         wait = True
         while wait:
@@ -614,9 +616,9 @@ class Game(object):
         unless player pressed any key
         """
         DISPLAY_SCREEN.blit(self.background, (0, 0))
-        print_mes(DISPLAY_SCREEN, "GAME OVER!", 40, RED, 400, 150)
-        print_mes(DISPLAY_SCREEN, "Press any key to start a new game",
-                  30, RED, 400, 300)
+        print_message(DISPLAY_SCREEN, "GAME OVER!", 40, RED, 400, 150)
+        print_message(DISPLAY_SCREEN, "Press any key to start a new game",
+                      30, RED, 400, 300)
         pygame.display.flip()
         wait = True
         while wait:
@@ -637,10 +639,10 @@ class Game(object):
         player pressed any key
         """
         DISPLAY_SCREEN.blit(self.background, (0, 0))
-        print_mes(DISPLAY_SCREEN, "WELCOME TO SPACE INVADERS", 40,
-                  RED, 400, 150)
-        print_mes(DISPLAY_SCREEN, "Press any key to start a new game", 30,
-                  RED, 400, 300)
+        print_message(DISPLAY_SCREEN, "WELCOME TO SPACE INVADERS", 40,
+                      RED, 400, 150)
+        print_message(DISPLAY_SCREEN, "Press any key to start a new game", 30,
+                      RED, 400, 300)
         pygame.display.flip()
         wait = True
         while wait:
@@ -655,8 +657,8 @@ class Game(object):
         """
         Prints a score on the screen
         """
-        print_mes(DISPLAY_SCREEN, "SCORE: {0}".format(self.score), 15,
-                  GREEN, 40, 20)
+        print_message(DISPLAY_SCREEN, "SCORE: {0}".format(self.score), 15,
+                      GREEN, 40, 20)
         pygame.display.flip()
 
     def process_events(self):
@@ -679,27 +681,25 @@ class Game(object):
         manages sprite groups and so on
         """
         current_time = pygame.time.get_ticks()
-
         self.pressed_keys = pygame.key.get_pressed()
-
         if self.pressed_keys[pygame.K_UP]:
-            if (current_time - self.player.timer) >= \
-                    self.player.fire_rate and len(self.bullet_group) == 0:
-                p_bullet = Bullet(self.player.rect.x + 20,
-                                  self.player.rect.y + 5, "player", 20)
-                self.bullet_group.add(p_bullet)
-                pygame.mixer.Sound("sounds\shoot.wav").play()
+            if ((current_time - self.player.timer) >=
+                    self.player.fire_rate and len(self.bullet_group) == 0):
+                player_bullet = Bullet(self.player.rect.x + 20,
+                                       self.player.rect.y + 5, "player", 20)
+                self.bullet_group.add(player_bullet)
+                assets.Assets.SHOOT_SOUND.play()
                 self.player.timer += self.player.fire_rate
             else:
                 pass
 
         current_time = pygame.time.get_ticks()
-        if (current_time - self.enemies.timer) >= self.enemies.fire_rate \
-                and len(self.enemy_bullets_group) == 0:
+        if ((current_time - self.enemies.timer) >= self.enemies.fire_rate
+                and len(self.enemy_bullets_group) == 0):
             if 8 >= self.enemies.alive_enemies_count > 4:
                 how_many_should_fire = 5
-            elif self.enemies.alive_enemies_count <= 4 and \
-                    self.enemies.alive_enemies_count != 0:
+            elif (self.enemies.alive_enemies_count <= 4 and
+                  self.enemies.alive_enemies_count != 0):
                 how_many_should_fire = self.enemies.alive_enemies_count - 1
             elif self.enemies.alive_enemies_count == 0:
                 how_many_should_fire = 0
@@ -710,14 +710,14 @@ class Game(object):
                                                    how_many_should_fire)
 
             for enemy_index in list_of_firing_enemies:
-                r = enemy_index // 10
-                c = enemy_index % 10
+                row = enemy_index // 10
+                column = enemy_index % 10
                 random_speed = random.choice(self.enemies.bullet_speeds)
-                enemy_bullet = Bullet(self.enemies.enemies_list[r][c].rect.x + 20,
-                                      self.enemies.enemies_list[r][c].rect.y + 5,
+                enemy_bullet = Bullet(self.enemies.enemies_list[row][column].rect.x + 20,
+                                      self.enemies.enemies_list[row][column].rect.y + 5,
                                       "enemy", random_speed)
                 self.enemy_bullets_group.add(enemy_bullet)
-            pygame.mixer.Sound("sounds\shoot2.wav").play()
+            assets.Assets.ENEMY_SHOOT_SOUND.play()
             self.enemies.timer = current_time
 
     def check_enemies_positions(self):
@@ -728,8 +728,8 @@ class Game(object):
         player has failed to protect the Earth from the invaders
         and the game ends
         """
-        for en in self.enemies:
-            if en.rect.y >= 510:
+        for enemy in self.enemies:
+            if enemy.rect.y >= 510:
                 self.player.kill()
                 self.score = 0
                 self.over_screen = True
@@ -740,32 +740,32 @@ class Game(object):
         Checks for the possible collisions of different sprites
         and manages their "deaths"
         """
-        for en in pygame.sprite.groupcollide(self.enemies,
-                                             self.bullet_group, False, True).keys():
-            self.score += en.points_scored
-            pygame.mixer.Sound("sounds\invaderkilled.wav").play()
-            en.image = en.death_image
-            en.update()
-            en.kill()
+        for enemy in pygame.sprite.groupcollide(self.enemies,
+                                                self.bullet_group, False, True).keys():
+            self.score += enemy.points_scored
+            assets.Assets.DEATH_SOUND.play()
+            enemy.image = enemy.death_image
+            enemy.update()
+            enemy.kill()
 
-        for pl in pygame.sprite.groupcollide(self.player_group,
-                                             self.enemy_bullets_group, False, True).keys():
+        for player in pygame.sprite.groupcollide(self.player_group,
+                                                 self.enemy_bullets_group, False, True).keys():
             if self.life1.alive():
                 self.life1.kill()
             elif self.life2.alive():
                 self.life2.kill()
             elif self.life3.alive():
                 self.life3.kill()
-                pl.kill()
+                player.kill()
                 self.over_screen = True
                 self.score = 0
 
-        for sup in pygame.sprite.groupcollide(self.sup_enemy_group,
-                                              self.bullet_group, True, True).keys():
-            sup = SuperEnemy()
-            self.all_group.add(sup)
+        for super_enemy in pygame.sprite.groupcollide(self.super_enemy_group,
+                                                      self.bullet_group, True, True).keys():
+            super_enemy = SuperEnemy()
+            self.all_group.add(super_enemy)
             self.score += 200
-            self.sup_enemy_group.add(sup)
+            self.super_enemy_group.add(super_enemy)
 
     def run_game(self):
         """Basically a place where everything comes together"""
@@ -773,12 +773,9 @@ class Game(object):
         if self.new_game:
             self.init_new_game()
             self.new_game_screen()
-
             self.new_level_screen()
             self.create_level("new_game")
-
             self.level = 0
-
             self.next_level = False
             self.new_game = False
 
@@ -804,17 +801,11 @@ class Game(object):
             self.pause_screen()
 
         if not self.game_over:
-
             if not self.paused:
-
                 self.execute_logic()
-
                 self.collisions()
-
                 self.update_all()
-
                 self.check_enemies_positions()
-
                 if self.enemies.alive_enemies_count == 0 and \
                         self.player.alive():
                     self.next_level = True
@@ -837,24 +828,19 @@ def main():
     the DISPLAY variable.
     """
     pygame.init()
-    bg = pygame.image.load("images\space.png")
-    bg = pygame.transform.scale(bg, (800, 600))
+    assets.Assets.load()
+    back_ground = pygame.transform.scale(assets.Assets.BACK_GROUND, (800, 600))
     pygame.display.set_caption("Space invaders by Andriei Gensh")
-    DISPLAY_SCREEN.blit(bg, (0, 0))
+    DISPLAY_SCREEN.blit(back_ground, (0, 0))
     over = False
-
     game_instance = Game()
 
     while not over:
-        DISPLAY_SCREEN.blit(bg, (0, 0))
+        DISPLAY_SCREEN.blit(back_ground, (0, 0))
         over = game_instance.process_events()
-
         game_instance.run_game()
-
         game_instance.display()
-
         game_instance.clock.tick(game_instance.fps)
-
     pygame.quit()
 
 
