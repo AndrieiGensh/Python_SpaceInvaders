@@ -25,7 +25,7 @@ DISPLAY_SCREEN = pygame.display.set_mode((800, 600))
 def print_message(screen, message, size, colour, x_position, y_position):
     """ Function prints out a message in a specified position on the screen
     screen - object, that pygame.display.set_mode() returns
-    message - mesage you would like to be printed
+    message - message you would like to be printed
     size - font size of the text
     colour - text colour
     x_pos, y_pos - position of the message on the screen
@@ -50,14 +50,14 @@ class Life(pygame.sprite.Sprite):
         """
         self.image = assets.Assets.SHIP_IMAGE
         self.image = pygame.transform.scale(self.image, (23, 23))
-        self.rect = self.image.get_rect(topleft=(position_x, position_y))
+        self.rectangle = self.image.get_rect(topleft=(position_x, position_y))
         self.state = True  # alive or not
 
     def update(self):
         """
         Updates the sprite on the screen
         """
-        DISPLAY_SCREEN.blit(self.image, self.rect)
+        DISPLAY_SCREEN.blit(self.image, self.rectangle)
 
 
 class Bullet(pygame.sprite.Sprite):
@@ -70,7 +70,7 @@ class Bullet(pygame.sprite.Sprite):
         super().__init__()
 
         self.image = assets.Assets.LASER_IMAGE
-        self.rect = self.image.get_rect(topleft=(center_x, center_y))
+        self.rectangle = self.image.get_rect(topleft=(center_x, center_y))
         self.master = who_shoots
         if self.master == "player":
             self.direction = UP
@@ -83,13 +83,13 @@ class Bullet(pygame.sprite.Sprite):
         Updates the position of the bullet once it was created. If it
         reaches the screen borders - it "dies"
         """
-        DISPLAY_SCREEN.blit(self.image, self.rect)
-        self.rect.y += self.direction * self.speed
+        DISPLAY_SCREEN.blit(self.image, self.rectangle)
+        self.rectangle.y += self.direction * self.speed
         if self.direction == UP:
-            if self.rect.y <= 20:
+            if self.rectangle.y <= 20:
                 self.kill()
         else:
-            if self.rect.y >= 580:
+            if self.rectangle.y >= 580:
                 self.kill()
 
 
@@ -112,7 +112,7 @@ class Player(pygame.sprite.Sprite):
         super().__init__()
 
         self.image = assets.Assets.PLAYER_IMAGE
-        self.rect = self.image.get_rect(topleft=(370, 550))
+        self.rectangle = self.image.get_rect(topleft=(370, 550))
         self.movement_speed = 5
         self.fire_rate = 100
         self.timer = pygame.time.get_ticks()
@@ -121,8 +121,8 @@ class Player(pygame.sprite.Sprite):
         """
         Resets players position on the screen
         """
-        self.rect.x = 370
-        self.rect.y = 550
+        self.rectangle.x = 370
+        self.rectangle.y = 550
 
     def update(self, pressed_keys):
         """
@@ -131,13 +131,13 @@ class Player(pygame.sprite.Sprite):
         :param pressed_keys: obvious, the keys that are currently pressed
         """
         if pressed_keys[pygame.K_LEFT]:
-            if self.rect.x >= 20:
-                self.rect.x -= self.movement_speed
-                DISPLAY_SCREEN.blit(self.image, self.rect)
+            if self.rectangle.x >= 20:
+                self.rectangle.x -= self.movement_speed
+                DISPLAY_SCREEN.blit(self.image, self.rectangle)
         elif pressed_keys[pygame.K_RIGHT]:
-            if self.rect.x <= 740:
-                self.rect.x += self.movement_speed
-                DISPLAY_SCREEN.blit(self.image, self.rect)
+            if self.rectangle.x <= 740:
+                self.rectangle.x += self.movement_speed
+                DISPLAY_SCREEN.blit(self.image, self.rectangle)
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -169,9 +169,9 @@ class Enemy(pygame.sprite.Sprite):
             self.images = assets.Assets.ENEMY_3_ANIMATION
             self.death_image = assets.Assets.ENEMY_3_DEATH
         self.image = pygame.transform.scale(self.image, (40, 35))
-        self.rect = self.image.get_rect()
-        self.rect.x = 35 + 60 * column
-        self.rect.y = 30 + 75 * row
+        self.rectangle = self.image.get_rect()
+        self.rectangle.x = 35 + 60 * column
+        self.rectangle.y = 30 + 75 * row
         self.row = row
         self.column = column
         self.points_scored = 50
@@ -180,7 +180,7 @@ class Enemy(pygame.sprite.Sprite):
         """
         Updates enemy o the screen
         """
-        DISPLAY_SCREEN.blit(self.image, self.rect)
+        DISPLAY_SCREEN.blit(self.image, self.rectangle)
 
 
 class EnemyGroup(pygame.sprite.Group):
@@ -327,23 +327,23 @@ class EnemyGroup(pygame.sprite.Group):
         if current_time - self.move_timer >= self.move_time:
             self.frame_counter = (self.frame_counter + 1) % 2
             for enemy in self:
-                enemy.rect.x += self.direction * self.left_right_speed
+                enemy.rectangle.x += self.direction * self.left_right_speed
                 enemy.image = enemy.images[self.frame_counter]
             if self.direction == DOWN:
                 for row in range(0, self.rows):
                     if isinstance(self.enemies_list[row][self.right_column_index], Enemy):
-                        if self.enemies_list[row][self.right_column_index].rect.x >= 725:
+                        if self.enemies_list[row][self.right_column_index].rectangle.x >= 725:
                             self.direction = UP
                             for enemy in self:
-                                enemy.rect.y += self.down_speed
+                                enemy.rectangle.y += self.down_speed
                         break
             else:
                 for row in range(0, self.rows):
                     if isinstance(self.enemies_list[row][self.left_column_index], Enemy):
-                        if self.enemies_list[row][self.left_column_index].rect.x <= 35:
+                        if self.enemies_list[row][self.left_column_index].rectangle.x <= 35:
                             self.direction = DOWN
                             for enemy in self:
-                                enemy.rect.y += self.down_speed
+                                enemy.rectangle.y += self.down_speed
                         break
 
             for enemy in self:
@@ -367,9 +367,9 @@ class SuperEnemy(pygame.sprite.Sprite):
 
         self.image = assets.Assets.MYSTERY_IMAGE
         self.image = pygame.transform.scale(self.image, (50, 35))
-        self.rect = self.image.get_rect()
-        self.rect.x = -70
-        self.rect.y = 30
+        self.rectangle = self.image.get_rect()
+        self.rectangle.x = -70
+        self.rectangle.y = 30
         self.speed = 6
         self.direction = DOWN
 
@@ -388,15 +388,15 @@ class SuperEnemy(pygame.sprite.Sprite):
         if time >= self.show_up_time:
             assets.Assets.MYSTERY_SOUND.play()
             if self.direction == DOWN:
-                self.rect.x += self.speed
-                if self.rect.x >= 800:
+                self.rectangle.x += self.speed
+                if self.rectangle.x >= 800:
                     self.direction = UP
-                    self.rect.x = 870
+                    self.rectangle.x = 870
                     self.timer = pygame.time.get_ticks()
             else:
-                self.rect.x -= self.speed
-                if self.rect.x <= -30:
-                    self.rect.x = -100
+                self.rectangle.x -= self.speed
+                if self.rectangle.x <= -30:
+                    self.rectangle.x = -100
                     self.direction = DOWN
                     self.timer = pygame.time.get_ticks()
 
@@ -685,8 +685,8 @@ class Game(object):
         if self.pressed_keys[pygame.K_UP]:
             if ((current_time - self.player.timer) >=
                     self.player.fire_rate and len(self.bullet_group) == 0):
-                player_bullet = Bullet(self.player.rect.x + 20,
-                                       self.player.rect.y + 5, "player", 20)
+                player_bullet = Bullet(self.player.rectangle.x + 20,
+                                       self.player.rectangle.y + 5, "player", 20)
                 self.bullet_group.add(player_bullet)
                 assets.Assets.SHOOT_SOUND.play()
                 self.player.timer += self.player.fire_rate
@@ -713,8 +713,8 @@ class Game(object):
                 row = enemy_index // 10
                 column = enemy_index % 10
                 random_speed = random.choice(self.enemies.bullet_speeds)
-                enemy_bullet = Bullet(self.enemies.enemies_list[row][column].rect.x + 20,
-                                      self.enemies.enemies_list[row][column].rect.y + 5,
+                enemy_bullet = Bullet(self.enemies.enemies_list[row][column].rectangle.x + 20,
+                                      self.enemies.enemies_list[row][column].rectangle.y + 5,
                                       "enemy", random_speed)
                 self.enemy_bullets_group.add(enemy_bullet)
             assets.Assets.ENEMY_SHOOT_SOUND.play()
@@ -729,7 +729,7 @@ class Game(object):
         and the game ends
         """
         for enemy in self.enemies:
-            if enemy.rect.y >= 510:
+            if enemy.rectangle.y >= 510:
                 self.player.kill()
                 self.score = 0
                 self.over_screen = True
