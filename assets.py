@@ -16,7 +16,7 @@ class Assets:
         object of this class in order to get access to the loaded data
         """
         # initialize pygame here so that you don`t need to do
-        # it every time in every module you are using this file
+        # it every time in every module you are using this file in
         pygame.init()
         # ships images loaded here
         Assets.PLAYER_IMAGE = pygame.image.load("images/ship.png")
