@@ -1,24 +1,23 @@
+"""Tests for Space_invaders EnemyGroup module"""
+
 import Space_invaders
+import assets
+import pygame
 import unittest
 import random
 
 
-class EnemyGroupTest (unittest.TestCase):
+class EnemyGroupTest(unittest.TestCase):
     def setUp(self):
         self.enemygroup = Space_invaders.EnemyGroup()
+        # load the assets so that the tests could run properly
+        assets.Assets.load()
 
     def test_level_changes(self):
-        """
-        Test how the movement of enemies changes depending on the current game level
-        """
-        self.enemygroup = Space_invaders.EnemyGroup()
         self.enemygroup.level_changes(10)
-        self.assertEqual(self.enemygroup.move_time, 600 - 20*10)
+        self.assertEqual(self.enemygroup.move_time, 600 - 20 * 10)
 
     def test_reset(self):
-        """
-        Tests the functionality of the reset method for the enemy group
-        """
         self.enemygroup.direction = 10
         self.enemygroup.move_time = 0
         self.enemygroup.left_right_speed = -500
@@ -29,27 +28,18 @@ class EnemyGroupTest (unittest.TestCase):
         self.assertTrue(self.enemygroup.right_column_index == 9)
         self.assertTrue(self.enemygroup.left_column_index == 0)
         index = random.randint(0, 29)
-        self.assertTrue(self.enemygroup.enemies_list[int(index/10)][int(index%10)] is None)
+        self.assertIsNone(self.enemygroup.enemies_list[int(index / 10)][int(index % 10)])
 
     def test_check_borders(self):
-        """
-        Tests the behavior of the borders checking method. Simulated situation -
-        there is only one enemy left alive
-        :return:
-        """
         index = random.randint(0, 29)
         self.enemygroup.reset_group_parameters()
-        self.enemygroup.enemies_list[int(index/10)][int(index%10)] = Space_invaders.Enemy(int(index/10),int(index%10))
+        self.enemygroup.enemies_list[int(index / 10)][int(index % 10)] = Space_invaders.Enemy(
+            int(index / 10), int(index % 10))
         self.enemygroup.check_border_columns()
-        self.assertTrue(self.enemygroup.right_column_index == int(index%10))
-        self.assertTrue(self.enemygroup.left_column_index == int(index%10))
+        self.assertTrue(self.enemygroup.right_column_index == int(index % 10))
+        self.assertTrue(self.enemygroup.left_column_index == int(index % 10))
 
     def test_add_internal(self):
-        """
-        Tests the behavior of the enemy adding method. Simulated situation -
-        there are no enemies at all and then some of them are added
-        (8 to be exact)
-        """
         self.enemygroup.empty()
         for row in range(2):
             for column in range(4):
@@ -61,13 +51,6 @@ class EnemyGroupTest (unittest.TestCase):
         self.assertEqual(amount, 8)
 
     def test_remove_internal(self):
-        """
-        Tests the behavior of the enemy deleting method. Simulated situation -
-        there are 30 enemies (the parameters are reset) and then some of
-        them are killed (8 to be exact)
-        This should have the impact on both alive_enemies_count  and
-        alive_indexes stored in EnemyGroup class
-        """
         self.enemygroup.reset_group_parameters()
         for i in range(self.enemygroup.rows):
             for j in range(self.enemygroup.columns):
@@ -80,3 +63,6 @@ class EnemyGroupTest (unittest.TestCase):
         self.assertEquals(self.enemygroup.alive_enemies_count, 22)
         self.assertTrue(len(self.enemygroup.alive_indexes) == 22)
 
+
+if __name__ == '__main__':
+    unittest.main()

@@ -1,7 +1,7 @@
 import pygame
 
 
-class Assets():
+class Assets:
     """
     This class is used to load all the necessary images,
     sound and so one at once, so there would be no
@@ -15,6 +15,9 @@ class Assets():
         The method is static so that we do not need to create an
         object of this class in order to get access to the loaded data
         """
+        # initialize pygame here so that you don`t need to do
+        # it every time in every module you are using this file
+        pygame.init()
         # ships images loaded here
         Assets.PLAYER_IMAGE = pygame.image.load("images/ship.png")
         Assets.SHIP_IMAGE = pygame.image.load("images/ship.png")

@@ -1,10 +1,7 @@
-"""random library"""
 import random
 
-"""python pygame library"""
 import pygame
 
-"""the file used to load all the necessary assets """
 import assets
 
 WHITE = (255, 255, 255)
@@ -21,11 +18,20 @@ UP = -1
 FONT_NAME = pygame.font.match_font("arial")
 DISPLAY_SCREEN = pygame.display.set_mode((800, 600))
 
+"""
+It is crucial to remember, that every "pygame.sprite.Sprite" child
+class should define its own "self.rect" filed as well as "update()"
+function, so that the other pygame module functions such as draw(), 
+spritecollide() etc. could work properly. For detailed information 
+read the official pygame.sprite.Sprite documentation on 
+https://www.pygame.org/docs/ref/sprite.html
+"""
+
 
 def print_message(screen, message, size, colour, x_position, y_position):
     """ Function prints out a message in a specified position on the screen
     screen - object, that pygame.display.set_mode() returns
-    message - mesage you would like to be printed
+    message - message you would like to be printed
     size - font size of the text
     colour - text colour
     x_pos, y_pos - position of the message on the screen
