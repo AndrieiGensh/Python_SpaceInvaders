@@ -20,7 +20,7 @@ DISPLAY_SCREEN = pygame.display.set_mode((800, 600))
 
 """
 It is crucial to remember, that every "pygame.sprite.Sprite" child
-class should define its own "self.rect" filed as well as "update()"
+class should define its own "self.rect" field as well as "update()"
 function, so that the other pygame module functions such as draw(), 
 spritecollide() etc. could work properly. For detailed information 
 read the official pygame.sprite.Sprite documentation on 
